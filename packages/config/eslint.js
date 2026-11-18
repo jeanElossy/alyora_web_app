@@ -4,7 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 
-/** Rules applied to every JavaScript file of the monorepo. */
+/** Règles appliquées à tous les fichiers JavaScript du monorepo. */
 export const base = defineConfig({
   name: 'alyora/base',
   files: ['**/*.{js,jsx}'],
@@ -17,9 +17,9 @@ export const base = defineConfig({
     sourceType: 'module',
   },
   rules: {
-    // Logging goes through Pino only.
+    // Les logs passent uniquement par Pino.
     'no-console': 'error',
-    // Files longer than 300 lines must be split.
+    // Un fichier de plus de 300 lignes doit être découpé.
     'max-lines': ['error', { max: 300 }],
     eqeqeq: ['error', 'always'],
     'no-var': 'error',
@@ -27,7 +27,7 @@ export const base = defineConfig({
   },
 });
 
-/** Node.js runtime: api, worker, shared and tooling files. */
+/** Environnement Node.js : api, worker, shared et fichiers d'outillage. */
 export const node = defineConfig({
   name: 'alyora/node',
   languageOptions: {
@@ -35,7 +35,7 @@ export const node = defineConfig({
   },
 });
 
-/** Browser runtime with React: apps/web sources. */
+/** Environnement navigateur avec React : sources de apps/web. */
 export const react = defineConfig({
   name: 'alyora/react',
   extends: [reactHooks.configs.flat.recommended],
@@ -47,5 +47,5 @@ export const react = defineConfig({
   },
 });
 
-/** Must come last: turns off stylistic rules that conflict with Prettier. */
+/** Doit venir en dernier : désactive les règles de style qui entrent en conflit avec Prettier. */
 export const prettier = defineConfig(prettierConfig);

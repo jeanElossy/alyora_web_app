@@ -1,13 +1,13 @@
-# Dependencies
+# Dépendances
 node_modules/
 
-# Build and test outputs
+# Sorties de build et de tests
 dist/
 dist-ssr/
 coverage/
 *.tsbuildinfo
 
-# Environment files: only the .env.example templates are committed
+# Fichiers d'environnement : seuls les modèles .env.example sont commités
 .env
 .env.*
 !.env.example
@@ -16,7 +16,7 @@ coverage/
 logs/
 *.log
 
-# Editors and OS
+# Éditeurs et système
 .vscode/*
 !.vscode/extensions.json
 .idea/

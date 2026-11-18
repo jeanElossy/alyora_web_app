@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src", "test", "migrations", "vitest.config.js", "migrate-mongo-config.js"]
 }

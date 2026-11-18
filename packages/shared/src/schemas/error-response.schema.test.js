@@ -3,11 +3,11 @@ import { ERROR_CODES } from '../errors/index.js';
 import { errorResponseSchema } from './error-response.schema.js';
 
 describe('errorResponseSchema', () => {
-  it('accepts a payload with code, message and details', () => {
+  it('accepts a payload with code, message and validation issues', () => {
     const payload = {
       code: ERROR_CODES.VALIDATION_ERROR,
       message: 'Invalid request body',
-      details: { fields: ['email'] },
+      details: { issues: [{ path: 'email', code: 'invalid_format', message: 'Invalid email' }] },
     };
 
     expect(errorResponseSchema.parse(payload)).toEqual(payload);
@@ -38,11 +38,33 @@ describe('errorResponseSchema', () => {
     ).toBe(false);
   });
 
-  it('rejects unknown keys', () => {
+  it('rejects unknown keys at the root', () => {
     const result = errorResponseSchema.safeParse({
       code: ERROR_CODES.INTERNAL_ERROR,
       message: 'Unexpected error',
       stack: 'Error: leaked stack trace',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects unknown keys inside details, so details cannot carry internal data', () => {
+    const result = errorResponseSchema.safeParse({
+      code: ERROR_CODES.INTERNAL_ERROR,
+      message: 'Unexpected error',
+      details: { stack: 'Error: leaked stack trace' },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects an issue that carries the received value', () => {
+    const result = errorResponseSchema.safeParse({
+      code: ERROR_CODES.VALIDATION_ERROR,
+      message: 'Invalid request body',
+      details: {
+        issues: [{ path: 'password', code: 'too_small', message: 'Too short', received: 'abc' }],
+      },
     });
 
     expect(result.success).toBe(false);

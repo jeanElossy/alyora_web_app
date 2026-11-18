@@ -1,14 +1,29 @@
 /**
- * Centralized error codes. Every API error response carries one of them.
+ * Catalogue centralisé des erreurs. Toute réponse d'erreur de l'API porte l'un de ces codes.
+ *
+ * - `httpStatus` : le statut HTTP renvoyé par l'API pour ce code.
+ * - `message` : message par défaut, destiné aux développeurs (en anglais). Le client web ne
+ *   l'affiche jamais : il traduit le `code` avec i18next.
+ */
+export const ERROR_CATALOG = Object.freeze({
+  VALIDATION_ERROR: Object.freeze({ httpStatus: 400, message: 'Invalid request' }),
+  UNAUTHENTICATED: Object.freeze({ httpStatus: 401, message: 'Authentication required' }),
+  FORBIDDEN: Object.freeze({ httpStatus: 403, message: 'Access denied' }),
+  NOT_FOUND: Object.freeze({ httpStatus: 404, message: 'Resource not found' }),
+  PAYLOAD_TOO_LARGE: Object.freeze({ httpStatus: 413, message: 'Request body too large' }),
+  RATE_LIMITED: Object.freeze({ httpStatus: 429, message: 'Too many requests' }),
+  INTERNAL_ERROR: Object.freeze({ httpStatus: 500, message: 'Internal server error' }),
+  SERVICE_UNAVAILABLE: Object.freeze({ httpStatus: 503, message: 'Service unavailable' }),
+});
+
+/** @typedef {keyof typeof ERROR_CATALOG} ErrorCode */
+
+/**
+ * Codes d'erreur sous forme d'objet énuméré ({ VALIDATION_ERROR: 'VALIDATION_ERROR', ... }),
+ * dérivé du catalogue : un code n'est déclaré qu'une seule fois.
  */
 export const ERROR_CODES = Object.freeze(
-  /** @type {const} */ ({
-    VALIDATION_ERROR: 'VALIDATION_ERROR',
-    UNAUTHENTICATED: 'UNAUTHENTICATED',
-    FORBIDDEN: 'FORBIDDEN',
-    NOT_FOUND: 'NOT_FOUND',
-    INTERNAL_ERROR: 'INTERNAL_ERROR',
-  }),
+  /** @type {{ readonly [K in ErrorCode]: K }} */ (
+    Object.fromEntries(Object.keys(ERROR_CATALOG).map((code) => [code, code]))
+  ),
 );
-
-/** @typedef {(typeof ERROR_CODES)[keyof typeof ERROR_CODES]} ErrorCode */

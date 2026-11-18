@@ -1,3 +1,3 @@
-// Process entry point of the background worker (BullMQ queues are wired in a later module).
-// Domain code (models, services) is imported from @alyora/api, never duplicated here.
+// Point d'entrée du processus worker (les files BullMQ seront branchées dans un module ultérieur).
+// Le code métier (modèles, services) est importé de @alyora/api, jamais dupliqué ici.
 import '@alyora/api';

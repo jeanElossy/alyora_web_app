@@ -1,0 +1,6 @@
+# Faux positifs gitleaks, identifiés un par un par leur empreinte (commit:fichier:règle:ligne).
+# N'ajouter ici qu'une valeur de test fictive, jamais un vrai secret, même révoqué.
+
+# Fausse valeur de test (marqueur cherché dans la sortie du processus), commit a33ba53 de M0.2.
+# La ligne porte depuis le commentaire gitleaks:allow.
+a33ba53f39151a9a719b3f79579391ae9666443c:apps/api/test/integration/startup.test.js:generic-api-key:13

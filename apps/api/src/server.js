@@ -1,3 +1,4 @@
-// Process entry point of the HTTP API.
-// Environment validation and the Express application are bootstrapped here in a later module.
-export {};
+// Point d'entrée du processus de l'API HTTP. Tout se passe dans bootstrap.js.
+import { startServer } from './bootstrap.js';
+
+await startServer();
