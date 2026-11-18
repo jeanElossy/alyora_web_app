@@ -1,5 +1,5 @@
 /**
- * Root component. Intentionally renders an empty page until the first screen module.
+ * Composant racine. Affiche volontairement une page vide jusqu'au premier module d'écran.
  */
 export function App() {
   return null;

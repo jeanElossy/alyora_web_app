@@ -1,3 +1,3 @@
-// Constants shared by the API, the worker and the web client.
-// Populated by the modules that need them.
+// Constantes partagées par l'API, le worker et le client web.
+// Remplies par les modules qui en ont besoin.
 export {};

@@ -6,7 +6,9 @@ français, devise XOF.
 ## Langue
 
 - Explications, plans et réponses : français.
-- Code, noms de variables, commentaires techniques, messages de commit : anglais.
+- Code et noms de variables : anglais.
+- Commentaires du code, messages de commit, titres et descriptions de PR : français
+  (les types Conventional Commits restent en anglais : feat, fix, chore…).
 - Textes d'interface : jamais en dur, toujours via i18next.
 
 ## Workflow obligatoire

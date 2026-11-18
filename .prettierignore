@@ -1,5 +1,5 @@
-# Prettier also honours .gitignore (node_modules, dist, coverage...).
+# Prettier respecte aussi .gitignore (node_modules, dist, coverage...).
 pnpm-lock.yaml
 
-# Project rules are kept verbatim, as written by the project owner.
+# Les règles du projet sont conservées telles que rédigées par le responsable du projet.
 CLAUDE.md
