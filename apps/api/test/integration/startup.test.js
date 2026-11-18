@@ -10,7 +10,8 @@ import { createLogCapture } from '../helpers/log-capture.js';
 import { MONGODB_TEST_VERSION } from '../setup/global-setup.js';
 
 const SERVER_ENTRY = fileURLToPath(new URL('../../src/server.js', import.meta.url));
-const REDIS_PASSWORD = 'R3disS3cret-marker';
+// Fausse valeur de test, cherchée dans la sortie pour prouver qu'elle n'y apparaît jamais.
+const REDIS_PASSWORD = 'R3disS3cret-marker'; // gitleaks:allow
 
 /** @param {Record<string, string>} env */
 function startWith(env) {
