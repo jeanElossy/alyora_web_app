@@ -2,17 +2,20 @@ packages:
   - apps/*
   - packages/*
 
-# Refuse to install with a Node.js or pnpm version outside the "engines" ranges.
+# Refuse l'installation avec une version de Node.js ou de pnpm hors des plages "engines".
 engineStrict: true
 
-# Dependencies allowed to run install scripts. Everything else is blocked by pnpm.
+# Dépendances autorisées à exécuter un script d'installation. pnpm bloque toutes les autres.
 allowBuilds:
-  # Vite 7 bundles esbuild; its postinstall verifies the platform binary.
+  # Vite 7 embarque esbuild ; son postinstall vérifie le binaire de la plateforme.
   esbuild: true
+  # Refusé explicitement : son postinstall télécharge un binaire MongoDB. Le binaire est
+  # téléchargé au premier lancement des tests à la place (et mis en cache en CI).
+  mongodb-memory-server: false
 
-# Packages hoisted into node_modules/.pnpm/node_modules (pnpm default: everything).
-# punycode is excluded: ESLint pulls it in (ajv -> uri-js), and once hoisted it shadows
-# the built-in "punycode" module typed by @types/node, so tsc type-checks its JS source.
+# Paquets remontés dans node_modules/.pnpm/node_modules (par défaut pour pnpm : tous).
+# punycode est exclu : ESLint l'installe (ajv -> uri-js) et, une fois remonté, il masque le
+# module intégré "punycode" typé par @types/node, si bien que tsc vérifie sa source JS.
 hoistPattern:
   - '*'
   - '!punycode'
