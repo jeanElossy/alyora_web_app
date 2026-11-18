@@ -1,0 +1,23 @@
+{
+  "name": "@alyora/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env src/server.js",
+    "start": "node src/server.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "dependencies": {
+    "@alyora/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@alyora/config": "workspace:*",
+    "@types/node": "^26.6.6",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "extends": "@alyora/config/jsconfig.base.json",
+  "include": ["src"]
+}
