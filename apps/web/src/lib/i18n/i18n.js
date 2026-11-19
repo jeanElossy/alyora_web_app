@@ -1,5 +1,6 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import ui from '../../components/ui/locales/fr.json';
 import common from '../../locales/common/fr.json';
 
 /** Seule langue de l'interface pour l'instant. */
@@ -14,9 +15,12 @@ export const KEYS_LANGUAGE = 'cimode';
 /** Espace de noms par défaut : textes communs à toute l'application (erreurs, chargement...). */
 export const COMMON_NAMESPACE = 'common';
 
+/** Textes du design system (components/ui), utilisés dans tous les espaces. */
+export const UI_NAMESPACE = 'ui';
+
 /**
- * Initialise i18next, de façon synchrone : les traductions communes sont dans le bundle
- * initial, si bien que le premier rendu a déjà ses textes. Sans effet si déjà fait.
+ * Initialise i18next, de façon synchrone : les traductions communes et celles du design system
+ * sont dans le bundle initial, si bien que le premier rendu a déjà ses textes. Sans effet si déjà fait.
  *
  * @returns {import('i18next').i18n}
  */
@@ -26,9 +30,9 @@ export function initI18n() {
       lng: DEFAULT_LANGUAGE,
       fallbackLng: DEFAULT_LANGUAGE,
       supportedLngs: [DEFAULT_LANGUAGE],
-      ns: [COMMON_NAMESPACE],
+      ns: [COMMON_NAMESPACE, UI_NAMESPACE],
       defaultNS: COMMON_NAMESPACE,
-      resources: { [DEFAULT_LANGUAGE]: { [COMMON_NAMESPACE]: common } },
+      resources: { [DEFAULT_LANGUAGE]: { [COMMON_NAMESPACE]: common, [UI_NAMESPACE]: ui } },
       initAsync: false,
       // React échappe déjà le texte rendu.
       interpolation: { escapeValue: false },

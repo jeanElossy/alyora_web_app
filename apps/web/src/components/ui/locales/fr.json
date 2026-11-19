@@ -1,0 +1,40 @@
+{
+  "spinner": {
+    "label": "Chargement en cours…"
+  },
+  "field": {
+    "required": "obligatoire"
+  },
+  "modal": {
+    "close": "Fermer la fenêtre"
+  },
+  "drawer": {
+    "close": "Fermer le panneau"
+  },
+  "toast": {
+    "region": "Notifications",
+    "close": "Fermer la notification"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "form": {
+    "submitFailed": "L’envoi n’a pas abouti.",
+    "errors": {
+      "required": "Ce champ est obligatoire.",
+      "invalid": "Cette valeur n’est pas valide.",
+      "invalid_type": "Cette valeur n’est pas valide.",
+      "invalid_email": "Saisissez une adresse e-mail valide, par exemple awa@exemple.ci.",
+      "invalid_format": "Le format de cette valeur n’est pas valide.",
+      "invalid_value": "Choisissez une des valeurs proposées.",
+      "must_accept": "Cette case doit être cochée pour continuer.",
+      "too_small_string": "Saisissez au moins {{minimum}} caractères.",
+      "too_big_string": "Saisissez au plus {{maximum}} caractères.",
+      "too_small_number": "La valeur doit être au moins {{minimum}}.",
+      "too_big_number": "La valeur doit être au plus {{maximum}}.",
+      "not_integer": "Saisissez un nombre entier."
+    }
+  }
+}

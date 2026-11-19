@@ -1,3 +1,4 @@
+import { EmptyState } from '../components/ui/EmptyState.jsx';
 import { CONTAINER } from './SpaceShell.jsx';
 
 /**
@@ -6,13 +7,13 @@ import { CONTAINER } from './SpaceShell.jsx';
  * @property {string} eyebrow Nom de l'espace, en surtitre.
  * @property {string} title
  * @property {string} intro
- * @property {string} emptyTitle Titre du panneau, tant que l'espace n'a pas d'outil.
+ * @property {string} emptyTitle Titre de l'état vide, tant que l'espace n'a pas d'outil.
  * @property {string} emptyMessage
  */
 
 /**
  * Accueil d'un espace protégé, en attendant ses outils : un en-tête de tableau de bord et un
- * panneau vide soigné. Tous les textes arrivent traduits.
+ * état vide du design system. Tous les textes arrivent traduits.
  *
  * @param {SpaceHomeProps} props
  */
@@ -27,20 +28,7 @@ export function SpaceHome({ documentTitle, eyebrow, title, intro, emptyTitle, em
         {title}
       </h1>
       <p className="mt-4 max-w-prose leading-relaxed text-muted sm:text-lg">{intro}</p>
-
-      <section className="mt-12 flex flex-col items-center rounded-3xl border border-dashed border-charcoal/20 bg-white/70 px-6 py-16 text-center sm:py-20">
-        <span
-          aria-hidden="true"
-          className="grid h-16 w-16 place-items-center rounded-full border border-champagne bg-ivory"
-        >
-          <svg viewBox="0 0 48 48" className="h-10 w-10" fill="none">
-            <circle cx="19" cy="24" r="11" className="stroke-forest" strokeWidth="1.75" />
-            <circle cx="29" cy="24" r="11" className="stroke-champagne" strokeWidth="1.75" />
-          </svg>
-        </span>
-        <h2 className="mt-6 font-display text-2xl font-semibold text-forest">{emptyTitle}</h2>
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">{emptyMessage}</p>
-      </section>
+      <EmptyState className="mt-12" title={emptyTitle} description={emptyMessage} />
     </div>
   );
 }

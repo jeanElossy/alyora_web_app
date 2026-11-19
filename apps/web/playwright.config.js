@@ -30,5 +30,7 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: !isCi,
     timeout: 120_000,
+    // Build de test : la page /design-system, absente du build de production, y est activée.
+    env: { VITE_ENABLE_DESIGN_SYSTEM: 'true' },
   },
 });

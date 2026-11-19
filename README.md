@@ -86,7 +86,12 @@ Quatre espaces, chacun dans son propre bundle, chargé à la première visite :
 | `/admin`        | Administration de la plateforme | Session, sinon `/admin/connexion`        |
 
 `pnpm --filter @alyora/web build` affiche le poids de chaque espace et échoue si le bundle
-initial de l'espace public dépasse 180 Ko compressés. Les décisions du socle web sont dans
+initial de l'espace public dépasse 180 Ko compressés.
+
+Le design system (`src/components/ui/`) se consulte sur `/design-system` : tous les composants
+dans tous leurs états, avec un passage en langue des clés de traduction. La page existe en
+développement (`pnpm --filter @alyora/web dev`) et n'est jamais dans le build de production,
+sauf avec `VITE_ENABLE_DESIGN_SYSTEM=true` (tests de bout en bout). Les décisions du socle web sont dans
 [docs/decisions/0003-web-foundation.md](./docs/decisions/0003-web-foundation.md).
 
 ## API
@@ -177,9 +182,10 @@ annoncée au démarrage en développement et en test ; **à venir** : lue par un
 
 ### apps/web
 
-| Variable            | Rôle                                                                              |
-| ------------------- | --------------------------------------------------------------------------------- |
-| `VITE_API_BASE_URL` | URL de base de l'API, préfixe `/api/v1` compris. Vide : même origine (`/api/v1`). |
+| Variable                    | Rôle                                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL`         | URL de base de l'API, préfixe `/api/v1` compris. Vide : même origine (`/api/v1`).         |
+| `VITE_ENABLE_DESIGN_SYSTEM` | `true` pour inclure la page `/design-system` dans un build (tests). Jamais en production. |
 
 Toute variable `VITE_*` se retrouve dans le JavaScript public : aucun secret côté web.
 

@@ -1,0 +1,258 @@
+{
+  "documentTitle": "Design system · ALYORA",
+  "eyebrow": "Design system",
+  "title": "Les composants d’ALYORA",
+  "intro": "Chaque composant de l’interface, dans tous ses états. Accessible au clavier, pensé d’abord pour un écran de 360 pixels.",
+  "language": {
+    "label": "Langue d’affichage",
+    "fr": "Français",
+    "keys": "Clés de traduction"
+  },
+  "toc": {
+    "label": "Sommaire de la page"
+  },
+  "sections": {
+    "foundations": {
+      "title": "Fondations",
+      "description": "Les couleurs de la charte, leurs contrastes et la typographie."
+    },
+    "actions": {
+      "title": "Actions et étiquettes",
+      "description": "Boutons, badges, avatars et infobulles."
+    },
+    "fields": {
+      "title": "Champs",
+      "description": "Saisie, liste déroulante, cases à cocher et boutons radio, dans leurs différents états."
+    },
+    "form": {
+      "title": "Formulaire",
+      "description": "React Hook Form branché sur un schéma Zod partagé avec l’API : erreurs par champ, formulaire désactivé pendant l’envoi."
+    },
+    "navigation": {
+      "title": "Navigation",
+      "description": "Onglets et pagination par curseur."
+    },
+    "overlays": {
+      "title": "Superpositions",
+      "description": "Fenêtre modale, panneau latéral et notifications."
+    },
+    "data": {
+      "title": "Données et états",
+      "description": "Carte, tableau, état vide, chargement et appel à l’API."
+    }
+  },
+  "colors": {
+    "title": "Couleurs",
+    "forest": "Vert profond",
+    "champagne": "Champagne",
+    "champagneDeep": "Champagne foncé",
+    "ivory": "Ivoire",
+    "charcoal": "Charbon",
+    "muted": "Texte secondaire",
+    "danger": "Erreur",
+    "warning": "Alerte",
+    "outline": "Bordure des champs",
+    "contrast": "Contraste sur ivoire : {{ratio}}:1",
+    "decorative": "Jamais pour du texte sur fond clair",
+    "background": "Couleur de fond"
+  },
+  "typography": {
+    "title": "Typographie",
+    "display": "Cormorant Garamond, pour les titres",
+    "displaySample": "Votre mariage, orchestré avec élégance",
+    "text": "Inter, pour le texte",
+    "textSample": "Les réponses arrivent au fil de l’eau, prêtes à nourrir votre plan de table."
+  },
+  "buttons": {
+    "title": "Boutons",
+    "primary": "Confirmer",
+    "secondary": "Ajouter un invité",
+    "outline": "Annuler",
+    "ghost": "Voir le détail",
+    "danger": "Supprimer",
+    "loading": "Envoi en cours",
+    "disabled": "Indisponible",
+    "small": "Petit bouton",
+    "large": "Grand bouton",
+    "link": "Lien présenté en bouton"
+  },
+  "badges": {
+    "title": "Badges",
+    "neutral": "Brouillon",
+    "forest": "Confirmé",
+    "champagne": "Invité d’honneur",
+    "success": "Présent",
+    "warning": "En attente",
+    "danger": "Absent"
+  },
+  "avatars": {
+    "title": "Avatars",
+    "photo": "Awa Koné",
+    "initials": "Yao Kouassi",
+    "single": "Mariam"
+  },
+  "tooltip": {
+    "title": "Infobulle",
+    "trigger": "Qu’est-ce qu’un RSVP ?",
+    "content": "La réponse d’un invité : présent ou absent, et le nombre de personnes qui l’accompagnent."
+  },
+  "fields": {
+    "title": "Champs de saisie",
+    "name": {
+      "label": "Nom complet",
+      "placeholder": "Par exemple : Awa Koné",
+      "hint": "Tel qu’il apparaîtra sur l’invitation."
+    },
+    "email": {
+      "label": "Adresse e-mail",
+      "value": "awa@exemple",
+      "error": "Saisissez une adresse e-mail valide, par exemple awa@exemple.ci."
+    },
+    "disabled": {
+      "label": "Code de l’événement",
+      "value": "ALY-2026-0042"
+    },
+    "message": {
+      "label": "Message aux mariés",
+      "placeholder": "Un mot pour les mariés…"
+    },
+    "menu": {
+      "label": "Menu",
+      "placeholder": "Choisir un menu"
+    },
+    "choices": "Cases et boutons radio",
+    "consent": {
+      "label": "Recevoir les rappels avant le mariage",
+      "description": "Un message la veille, un autre le matin même."
+    },
+    "consentChecked": {
+      "label": "Partager mes photos avec les mariés"
+    },
+    "consentDisabled": {
+      "label": "Option indisponible"
+    },
+    "attendance": {
+      "legend": "Serez-vous présent ?"
+    }
+  },
+  "options": {
+    "menu": {
+      "classic": "Menu traditionnel",
+      "vegetarian": "Menu végétarien",
+      "fish": "Poisson braisé"
+    },
+    "attendance": {
+      "yes": "Oui, avec plaisir",
+      "no": "Non, malheureusement"
+    }
+  },
+  "form": {
+    "label": "Formulaire de démonstration",
+    "fullName": "Nom complet",
+    "email": "Adresse e-mail",
+    "attendance": "Serez-vous présent ?",
+    "guests": "Nombre de personnes",
+    "guestsHint": "Vous compris, de 1 à 10.",
+    "menu": "Menu",
+    "menuPlaceholder": "Choisir un menu",
+    "message": "Message aux mariés",
+    "messageHint": "Facultatif, 280 caractères au plus.",
+    "consent": "J’accepte que mes réponses servent à l’organisation du mariage.",
+    "submit": "Envoyer ma réponse",
+    "simulateError": "Simuler une erreur de l’API",
+    "simulateErrorHint": "Le prochain envoi recevra une erreur de validation de l’API sur l’adresse e-mail.",
+    "success": "Réponse enregistrée",
+    "successDescription": "Merci, les mariés ont bien reçu votre réponse."
+  },
+  "tabs": {
+    "title": "Onglets",
+    "label": "Organisation du mariage",
+    "guests": "Invités",
+    "seating": "Plan de table",
+    "program": "Programme",
+    "guestsContent": "La liste des invités, leurs réponses et leurs accompagnants.",
+    "seatingContent": "La disposition des tables, mise à jour à chaque réponse validée.",
+    "programContent": "Le déroulé de la journée, de la cérémonie à la soirée."
+  },
+  "pagination": {
+    "title": "Pagination",
+    "summary": "Invités {{from}} à {{to}} sur {{total}}"
+  },
+  "modal": {
+    "title": "Fenêtre modale",
+    "open": "Ouvrir la fenêtre",
+    "heading": "Confirmer votre présence",
+    "description": "Les mariés seront prévenus de votre venue.",
+    "body": "Vous pourrez modifier votre réponse jusqu’à la date limite fixée par les mariés.",
+    "confirm": "Confirmer",
+    "cancel": "Annuler"
+  },
+  "drawer": {
+    "title": "Panneau latéral",
+    "open": "Ouvrir le panneau",
+    "heading": "Détails de l’invité",
+    "description": "Informations visibles par l’organisateur.",
+    "body": "Awa Koné, table 3. Deux personnes, menu poisson braisé. Réponse reçue le 4 novembre.",
+    "close": "Fermer"
+  },
+  "toast": {
+    "title": "Notifications",
+    "success": "Afficher une confirmation",
+    "error": "Afficher une erreur",
+    "successTitle": "Invitation envoyée",
+    "successDescription": "Awa Koné recevra son invitation dans quelques instants.",
+    "errorTitle": "Envoi impossible",
+    "errorDescription": "Vérifiez votre connexion, puis réessayez."
+  },
+  "card": {
+    "title": "Carte",
+    "heading": "Mariage d’Awa et Yao",
+    "description": "Samedi 12 décembre 2026 · Abidjan, Cocody",
+    "body": "248 invités, 196 réponses reçues.",
+    "open": "Ouvrir le mariage"
+  },
+  "table": {
+    "title": "Tableau",
+    "caption": "Réponses des invités",
+    "columns": {
+      "name": "Invité",
+      "table": "Table",
+      "status": "Réponse",
+      "guests": "Personnes"
+    },
+    "rows": {
+      "r1": {
+        "name": "Awa Koné",
+        "table": "Table 3"
+      },
+      "r2": {
+        "name": "Yao Kouassi",
+        "table": "Table 1"
+      },
+      "r3": {
+        "name": "Mariam Traoré",
+        "table": "Table 5"
+      },
+      "r4": {
+        "name": "Koffi N’Guessan",
+        "table": "Table 2"
+      }
+    }
+  },
+  "empty": {
+    "title": "État vide",
+    "heading": "Aucun invité pour l’instant",
+    "description": "Ajoutez vos premiers invités pour commencer à envoyer les invitations.",
+    "action": "Ajouter un invité"
+  },
+  "loading": {
+    "title": "Chargement",
+    "spinner": "Chargement des invités…"
+  },
+  "api": {
+    "title": "Appel à l’API",
+    "description": "GET /api/v1/ping, par TanStack Query et le client API.",
+    "ok": "L’API répond.",
+    "retry": "Relancer l’appel"
+  }
+}
