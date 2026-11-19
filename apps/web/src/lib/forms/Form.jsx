@@ -35,9 +35,7 @@ export function Form({ form, onSubmit, children, className, ...props }) {
       try {
         await onSubmit(values);
       } catch (error) {
-        focusAfterSubmit.current = applyServerErrors(form, error, (key, options) =>
-          t(key, options ?? {}),
-        );
+        focusAfterSubmit.current = applyServerErrors(form, error);
       }
     })(event);
 
@@ -47,7 +45,8 @@ export function Form({ form, onSubmit, children, className, ...props }) {
       focusAfterSubmit.current = undefined;
     }
   }, [isSubmitting, form]);
-  const rootError = form.formState.errors.root?.server?.message;
+  // Clé de traduction (« common »), traduite ici à chaque rendu : elle suit la langue.
+  const rootErrorKey = form.formState.errors.root?.server?.message;
 
   return (
     <FormProvider {...form}>
@@ -57,13 +56,13 @@ export function Form({ form, onSubmit, children, className, ...props }) {
           disabled={isSubmitting}
           className={className ? `min-w-0 ${className}` : 'min-w-0'}
         >
-          {rootError ? (
+          {rootErrorKey ? (
             <div
               role="alert"
               className="rounded-2xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger"
             >
               <p className="font-medium">{t('form.submitFailed')}</p>
-              <p className="mt-1">{rootError}</p>
+              <p className="mt-1">{t(rootErrorKey, { ns: 'common' })}</p>
             </div>
           ) : null}
           {children}

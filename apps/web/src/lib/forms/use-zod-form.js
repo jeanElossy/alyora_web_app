@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { SERVER_ERROR_TYPE } from './server-errors.js';
 import { translateIssue } from './zod-messages.js';
 
 /**
@@ -26,13 +27,13 @@ export function useZodForm(schema, options = {}) {
   );
   const form = useForm({ mode: 'onTouched', ...options, resolver });
 
-  // Les messages sont traduits au moment de la validation : quand la langue change, les champs
-  // en erreur sont revalidés, pour que leur message suive. Les erreurs renvoyées par l'API
-  // (type "server") ne sont pas touchées.
+  // Les messages du schéma sont traduits au moment de la validation : quand la langue change,
+  // les champs en erreur sont revalidés, pour que leur message suive. Les erreurs renvoyées
+  // par l'API ne sont pas touchées : elles gardent une clé, traduite à l'affichage.
   const { language } = i18n;
   useEffect(() => {
     const fields = Object.entries(form.formState.errors)
-      .filter(([name, error]) => name !== 'root' && error?.type !== 'server')
+      .filter(([name, error]) => name !== 'root' && error?.type !== SERVER_ERROR_TYPE)
       .map(([name]) => name);
     if (fields.length > 0) {
       void form.trigger(fields);

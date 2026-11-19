@@ -3,9 +3,15 @@ import { create } from 'zustand';
 /**
  * @typedef {'success' | 'info' | 'error'} ToastTone
  *
+ * Une notification survit au rendu qui l'a créée : ses textes sont donc des clés de traduction,
+ * traduites à l'affichage, pour suivre un changement de langue. C'est la seule exception à la
+ * règle du design system (« les textes arrivent traduits »).
+ *
  * @typedef {object} ToastInput
- * @property {string} title Déjà traduit.
- * @property {string} [description]
+ * @property {string} ns Espace de noms i18next des clés.
+ * @property {string} title Clé de traduction du titre.
+ * @property {string} [description] Clé de traduction de la description.
+ * @property {Record<string, unknown>} [values] Valeurs d'interpolation, communes aux deux textes.
  * @property {ToastTone} [tone]
  *
  * @typedef {ToastInput & { id: number }} ToastItem

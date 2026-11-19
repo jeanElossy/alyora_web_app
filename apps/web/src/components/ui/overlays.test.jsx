@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import i18next from 'i18next';
 import { afterEach, describe, expect, it } from 'vitest';
+import { DEFAULT_LANGUAGE, KEYS_LANGUAGE, registerNamespace } from '../../lib/i18n/i18n.js';
 import { Button } from './Button.jsx';
 import { Drawer } from './Drawer.jsx';
 import { Modal } from './Modal.jsx';
@@ -9,8 +10,16 @@ import { Toaster } from './Toast.jsx';
 import { toast, useToastStore } from './toast-store.js';
 import { Tooltip } from './Tooltip.jsx';
 
-afterEach(() => {
+/** Textes des notifications de test : elles reçoivent des clés, traduites à l'affichage. */
+const TOAST_NAMESPACE = 'test-toast';
+registerNamespace(TOAST_NAMESPACE, {
+  sent: 'Invitation envoyée',
+  soon: '{{name}} la recevra bientôt.',
+});
+
+afterEach(async () => {
   useToastStore.setState({ toasts: [], active: false });
+  await i18next.changeLanguage(DEFAULT_LANGUAGE);
 });
 
 describe.each([
@@ -65,11 +74,7 @@ describe('Toast', () => {
     render(<Toaster />);
 
     act(() => {
-      toast({
-        title: 'Invitation envoyée',
-        description: 'Awa la recevra bientôt.',
-        tone: 'success',
-      });
+      toast({ ns: TOAST_NAMESPACE, title: 'sent', description: 'soon', values: { name: 'Awa' } });
     });
 
     expect(await screen.findByText('Invitation envoyée')).toBeTruthy();
@@ -78,10 +83,26 @@ describe('Toast', () => {
     expect(useToastStore.getState().toasts).toHaveLength(0);
   });
 
+  it('translates an open notification again when the language changes', async () => {
+    render(<Toaster />);
+    act(() => {
+      toast({ ns: TOAST_NAMESPACE, title: 'sent', description: 'soon', values: { name: 'Awa' } });
+    });
+    expect(await screen.findByText('Invitation envoyée')).toBeTruthy();
+
+    await act(async () => {
+      await i18next.changeLanguage(KEYS_LANGUAGE);
+    });
+
+    expect(screen.getByText('sent')).toBeTruthy();
+    expect(screen.getByText('soon')).toBeTruthy();
+    expect(screen.queryByText('Invitation envoyée')).toBeNull();
+  });
+
   it('marks the notification area as needed only from the first notification', () => {
     expect(useToastStore.getState().active).toBe(false);
 
-    toast({ title: 'Bonjour' });
+    toast({ ns: TOAST_NAMESPACE, title: 'sent' });
 
     expect(useToastStore.getState().active).toBe(true);
   });

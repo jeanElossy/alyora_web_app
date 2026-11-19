@@ -34,7 +34,7 @@ export function OverlaysSection() {
                 <Button
                   onClick={() => {
                     setModalOpen(false);
-                    toast({ title: t('modal.heading'), tone: 'success' });
+                    toast({ ns: NAMESPACE, title: 'modal.heading', tone: 'success' });
                   }}
                 >
                   {t('modal.confirm')}
@@ -67,8 +67,9 @@ export function OverlaysSection() {
               variant="outline"
               onClick={() =>
                 toast({
-                  title: t('toast.successTitle'),
-                  description: t('toast.successDescription'),
+                  ns: NAMESPACE,
+                  title: 'toast.successTitle',
+                  description: 'toast.successDescription',
                   tone: 'success',
                 })
               }
@@ -79,8 +80,9 @@ export function OverlaysSection() {
               variant="outline"
               onClick={() =>
                 toast({
-                  title: t('toast.errorTitle'),
-                  description: t('toast.errorDescription'),
+                  ns: NAMESPACE,
+                  title: 'toast.errorTitle',
+                  description: 'toast.errorDescription',
                   tone: 'error',
                 })
               }

@@ -236,11 +236,29 @@ test('translates an API failure, without any technical detail', async ({ page })
 
 test('leaves no text outside of the translations (keys language)', async ({ page }) => {
   await openDesignSystem(page);
+  // Textes nés avant le changement de langue : une notification ouverte, et les erreurs d'un
+  // envoi refusé par l'API (sous le champ et en tête du formulaire). Ils doivent suivre.
+  await page.getByRole('button', { name: 'Afficher une confirmation' }).click();
+  const demoForm = page.getByRole('form', { name: 'Formulaire de démonstration' });
+  await demoForm.getByRole('checkbox', { name: 'Simuler une erreur de l’API' }).click();
+  await demoForm.getByRole('textbox', { name: /Nom complet/ }).fill('Awa Koné');
+  await demoForm.getByRole('textbox', { name: /Adresse e-mail/ }).fill('awa@exemple.ci');
+  await demoForm.getByRole('radio', { name: 'Oui, avec plaisir' }).click();
+  await demoForm.getByRole('combobox', { name: /Menu/ }).click();
+  await page.getByRole('option', { name: 'Poisson braisé' }).click();
+  await demoForm.getByRole('checkbox', { name: /J’accepte/ }).click();
+  await demoForm.getByRole('button', { name: 'Envoyer ma réponse' }).click();
+  await expect(demoForm.getByRole('alert')).toBeVisible();
 
   await page.getByRole('combobox', { name: 'Langue d’affichage' }).click();
   await page.getByRole('option', { name: 'Clés de traduction' }).click();
 
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('title');
+  // Le nom du formulaire est devenu sa clé.
+  const formInKeys = page.getByRole('form', { name: 'form.label' });
+  await expect(formInKeys.getByRole('alert')).toContainText('errors.VALIDATION_ERROR');
+  await expect(formInKeys.getByText('form.errors.invalid_format')).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'toast.successTitle' })).toBeVisible();
   // Ce que perçoit l'utilisateur : le texte visible et celui des lecteurs d'écran, sans ce qui
   // est masqué à tous (aria-hidden : décorations, select natif caché de Radix).
   const words = await page.evaluate(() => {

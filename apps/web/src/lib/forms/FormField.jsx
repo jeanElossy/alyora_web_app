@@ -1,7 +1,9 @@
 import { Controller, useFormContext } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Checkbox } from '../../components/ui/Checkbox.jsx';
 import { Field } from '../../components/ui/Field.jsx';
 import { RadioGroup } from '../../components/ui/Radio.jsx';
+import { fieldErrorText } from './server-errors.js';
 
 /**
  * @typedef {import('react-hook-form').ControllerRenderProps<any, string>
@@ -20,17 +22,25 @@ import { RadioGroup } from '../../components/ui/Radio.jsx';
 
 /**
  * Champ relié au formulaire : libellé, aide, et message d'erreur traduit sous le contrôle.
+ * Comme les deux composants suivants, il se redessine quand la langue change, si bien qu'une
+ * erreur venue de l'API suit la langue (voir fieldErrorText).
  *
  * @param {FormFieldProps} props
  */
 export function FormField({ name, label, hint, required, children }) {
   const { control } = useFormContext();
+  const { t } = useTranslation('ui');
   return (
     <Controller
       name={name}
       control={control}
       render={({ field, fieldState }) => (
-        <Field label={label} hint={hint} required={required} error={fieldState.error?.message}>
+        <Field
+          label={label}
+          hint={hint}
+          required={required}
+          error={fieldErrorText(fieldState.error, t)}
+        >
           {(controlProps) => children({ ...field, ...controlProps })}
         </Field>
       )}
@@ -45,6 +55,7 @@ export function FormField({ name, label, hint, required, children }) {
  */
 export function FormCheckbox({ name, label, description }) {
   const { control } = useFormContext();
+  const { t } = useTranslation('ui');
   return (
     <Controller
       name={name}
@@ -58,7 +69,7 @@ export function FormCheckbox({ name, label, description }) {
           checked={field.value === true}
           onCheckedChange={(checked) => field.onChange(checked === true)}
           onBlur={field.onBlur}
-          error={fieldState.error?.message}
+          error={fieldErrorText(fieldState.error, t)}
         />
       )}
     />
@@ -72,6 +83,7 @@ export function FormCheckbox({ name, label, description }) {
  */
 export function FormRadioGroup({ name, legend, options }) {
   const { control } = useFormContext();
+  const { t } = useTranslation('ui');
   return (
     <Controller
       name={name}
@@ -83,7 +95,7 @@ export function FormRadioGroup({ name, legend, options }) {
           options={options}
           value={field.value ?? ''}
           onValueChange={field.onChange}
-          error={fieldState.error?.message}
+          error={fieldErrorText(fieldState.error, t)}
         />
       )}
     />

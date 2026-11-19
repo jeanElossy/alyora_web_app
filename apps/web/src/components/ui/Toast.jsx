@@ -12,7 +12,8 @@ const ACCENTS = { success: 'bg-forest', info: 'bg-champagne', error: 'bg-danger'
 /**
  * Zone des notifications (primitive Radix Toast), à monter une fois dans l'application :
  * annoncées aux lecteurs d'écran, atteignables au clavier (F8), fermées par Échap ou par un
- * glissement, mises en pause au survol et au focus.
+ * glissement, mises en pause au survol et au focus. Leurs textes sont traduits ici, à chaque
+ * rendu : une notification ouverte suit un changement de langue.
  */
 export function Toaster() {
   const { t } = useTranslation('ui');
@@ -38,11 +39,11 @@ export function Toaster() {
           />
           <div className="flex-1">
             <RadixToast.Title className="text-sm font-semibold text-forest">
-              {item.title}
+              {t(item.title, { ns: item.ns, ...item.values })}
             </RadixToast.Title>
             {item.description ? (
               <RadixToast.Description className="mt-1 text-sm text-muted">
-                {item.description}
+                {t(item.description, { ns: item.ns, ...item.values })}
               </RadixToast.Description>
             ) : null}
           </div>
