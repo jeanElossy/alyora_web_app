@@ -34,7 +34,10 @@
       "too_big_string": "Saisissez au plus {{maximum}} caractères.",
       "too_small_number": "La valeur doit être au moins {{minimum}}.",
       "too_big_number": "La valeur doit être au plus {{maximum}}.",
-      "not_integer": "Saisissez un nombre entier."
+      "not_integer": "Saisissez un nombre entier.",
+      "password_too_common": "Ce mot de passe est trop courant : il figure parmi les plus utilisés. Choisissez-en un autre.",
+      "password_too_repetitive": "Ce mot de passe se répète trop. Variez davantage les caractères.",
+      "password_contains_personal_info": "Ce mot de passe contient votre nom, votre adresse ou le nom d’ALYORA. Choisissez-en un autre."
     }
   }
 }

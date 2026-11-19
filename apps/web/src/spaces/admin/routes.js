@@ -7,5 +7,6 @@ import { protectedSpaceRoutes } from '../../app/space-routes.js';
  */
 export const adminRoutes = protectedSpaceRoutes({
   path: 'admin',
+  space: 'admin',
   importer: () => import('./admin-space.jsx'),
 });

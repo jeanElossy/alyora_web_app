@@ -5,7 +5,26 @@ const PROTECTED_SPACES = [
   { path: '/accueil', chunk: 'checkin-space', login: /Connexion à l’accueil des invités/ },
   { path: '/admin', chunk: 'admin-space', login: /Connexion à l’administration/ },
 ];
-const SPACE_CHUNKS = ['public-space', ...PROTECTED_SPACES.map((space) => space.chunk)];
+const SPACE_CHUNKS = [
+  'public-space',
+  'auth-pages',
+  ...PROTECTED_SPACES.map((space) => space.chunk),
+];
+
+/**
+ * Jeton CSRF : toute requête qui modifie l'état, refresh compris, en porte un.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+async function serveCsrf(page) {
+  await page.route('**/api/v1/auth/csrf', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ csrfToken: 'e2e-csrf-token' }),
+    }),
+  );
+}
 
 /**
  * Simule une session : l'API accepte le refresh silencieux et renvoie un access token.
@@ -13,6 +32,7 @@ const SPACE_CHUNKS = ['public-space', ...PROTECTED_SPACES.map((space) => space.c
  * @param {import('@playwright/test').Page} page
  */
 async function grantSession(page) {
+  await serveCsrf(page);
   await page.route('**/api/v1/auth/refresh', (route) =>
     route.fulfill({
       status: 200,
@@ -28,6 +48,7 @@ async function grantSession(page) {
  * @param {import('@playwright/test').Page} page
  */
 async function denySession(page) {
+  await serveCsrf(page);
   await page.route('**/api/v1/auth/refresh', (route) =>
     route.fulfill({
       status: 401,
@@ -152,6 +173,7 @@ for (const space of PROTECTED_SPACES) {
 test('shows an error page, not the login page, when the API cannot be reached', async ({
   page,
 }) => {
+  await serveCsrf(page);
   await page.route('**/api/v1/auth/refresh', (route) => route.abort('internetdisconnected'));
   await page.goto('/organisateur');
 
@@ -179,5 +201,7 @@ test('moves from the public space to a protected one, loading its bundle on dema
   await expect(
     page.getByRole('heading', { level: 1, name: /Connexion à l’espace organisateur/ }),
   ).toBeVisible();
-  expect([...loaded].sort()).toEqual(['organizer-space', 'public-space']);
+  // La connexion vient du bundle des pages du compte. React Router charge aussi le module de
+  // l'espace, en parallèle de sa garde : il ne contient aucun secret (ADR 0003).
+  expect([...loaded].sort()).toEqual(['auth-pages', 'organizer-space', 'public-space']);
 });

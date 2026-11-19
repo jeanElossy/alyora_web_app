@@ -12,4 +12,10 @@ export const queryKeys = Object.freeze({
     all: /** @type {const} */ (['system']),
     ping: () => /** @type {const} */ (['system', 'ping']),
   }),
+  // Le compte connecté : invalidé à la connexion et à la déconnexion.
+  auth: Object.freeze({
+    all: /** @type {const} */ (['auth']),
+    me: () => /** @type {const} */ (['auth', 'me']),
+    sessions: () => /** @type {const} */ (['auth', 'sessions']),
+  }),
 });

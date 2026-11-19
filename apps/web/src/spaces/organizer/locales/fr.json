@@ -4,7 +4,9 @@
   },
   "nav": {
     "label": "Navigation de l’espace organisateur",
-    "home": "Tableau de bord"
+    "home": "Tableau de bord",
+    "profile": "Profil",
+    "security": "Sécurité"
   },
   "home": {
     "documentTitle": "Tableau de bord · ALYORA",
@@ -19,9 +21,8 @@
     "message": "Cette page n’existe pas dans l’espace organisateur.",
     "back": "Revenir au tableau de bord"
   },
-  "login": {
-    "documentTitle": "Connexion · Espace organisateur",
-    "title": "Connexion à l’espace organisateur",
-    "message": "La connexion à l’espace organisateur sera bientôt disponible."
+  "account": {
+    "signOut": "Se déconnecter",
+    "signingOut": "Déconnexion…"
   }
 }

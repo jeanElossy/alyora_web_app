@@ -25,7 +25,11 @@ describe('apiClient.request', () => {
   });
 
   it('sends a JSON body and returns undefined for 204 No Content', async () => {
-    const fetchImpl = vi.fn(async () => new Response(null, { status: 204 }));
+    const fetchImpl = vi.fn(async (/** @type {string} */ url) =>
+      url.endsWith('/auth/csrf')
+        ? jsonResponse(200, { csrfToken: 'csrf-1' })
+        : new Response(null, { status: 204 }),
+    );
     const { client } = createClient(
       { fetchImpl: /** @type {typeof fetch} */ (/** @type {unknown} */ (fetchImpl)) },
       'token-1',
@@ -38,7 +42,10 @@ describe('apiClient.request', () => {
       `${BASE}/things`,
       expect.objectContaining({
         body: '{"name":"Awa"}',
-        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': 'csrf-1',
+        }),
       }),
     );
   });

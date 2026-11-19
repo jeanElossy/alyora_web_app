@@ -32,8 +32,8 @@ initial de l'espace public est limité à 180 Ko compressés.
 - Chaque espace a sa mise en page, sa navigation et sa page 404. Un visiteur sans session qui
   demande une page inconnue d'un espace protégé est redirigé vers la connexion avant d'apprendre
   si la page existe.
-- Les pages de connexion sont des coquilles sans formulaire : le module d'authentification
-  les remplacera.
+- Les pages de connexion, d'abord des coquilles sans formulaire, sont depuis M0.4c celles du
+  bundle des pages du compte (ADR 0004).
 
 ### Client API
 
@@ -216,8 +216,9 @@ react-i18next 18.0.1, tailwindcss et @tailwindcss/vite 4.3.5, @fontsource-variab
 
 ## Conséquences
 
-- Le paramètre `retour` de la page de connexion devra être validé par le module
-  d'authentification : un chemin de la même origine seulement, sinon redirection ouverte.
+- Le paramètre `retour` de la page de connexion est validé depuis M0.4c (`safeReturnPath`) : un
+  chemin de l'application seulement. Les coquilles de connexion ont été remplacées par les
+  pages du compte (ADR 0004).
 - Le cookie de refresh (`SameSite=Lax`) n'est envoyé que si l'application et l'API sont sur le
   même site (par exemple `app.<domaine>` et `api.<domaine>`).
 - Il reste environ 20 Ko de marge sur le budget public : toute dépendance chargée d'office

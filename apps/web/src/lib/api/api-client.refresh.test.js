@@ -22,8 +22,9 @@ describe('silent session refresh on 401 (race)', () => {
       Array.from({ length: 5 }, (_, index) => ({ url: `${BASE}/items/${index}` })),
     );
     expect(session.token).toBe('fresh-token');
-    // 5 envois rejetés, 1 refresh, 5 rejeux.
-    expect(server.calls).toHaveLength(11);
+    // 5 envois rejetés, le jeton CSRF (une fois), 1 refresh, 5 rejeux.
+    expect(server.calls).toHaveLength(12);
+    expect(server.state.csrfCalls).toBe(1);
   });
 
   it('holds a request that starts during a refresh until the refresh ends', async () => {

@@ -17,6 +17,7 @@ export const CONTAINER = 'mx-auto w-full max-w-6xl px-5 sm:px-8';
  * @property {string} spaceName Nom de l'espace, déjà traduit.
  * @property {string} navLabel Nom accessible de la navigation, déjà traduit.
  * @property {NavItem[]} navItems
+ * @property {import('react').ReactNode} [actions] Actions de l'en-tête (déconnexion).
  * @property {import('react').ReactNode} children
  */
 
@@ -31,7 +32,7 @@ export const CONTAINER = 'mx-auto w-full max-w-6xl px-5 sm:px-8';
  *
  * @param {SpaceShellProps} props
  */
-export function SpaceShell({ homePath, spaceName, navLabel, navItems, children }) {
+export function SpaceShell({ homePath, spaceName, navLabel, navItems, actions, children }) {
   const { t } = useTranslation();
 
   return (
@@ -54,6 +55,7 @@ export function SpaceShell({ homePath, spaceName, navLabel, navItems, children }
           <span className="ml-auto hidden truncate text-[0.7rem] tracking-[0.22em] text-muted uppercase sm:order-last sm:block">
             {spaceName}
           </span>
+          {actions ? <div className="ml-auto py-3 sm:order-last sm:ml-0">{actions}</div> : null}
           <nav aria-label={navLabel} className="order-last w-full sm:order-none sm:w-auto">
             <ul className="-mb-px flex gap-7 overflow-x-auto">
               {navItems.map((item) => (
