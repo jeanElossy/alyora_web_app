@@ -3,6 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { WorkerConfigError, loadWorkerConfig } from './config.js';
 
 const KEY = randomBytes(32).toString('base64');
+// Fausses clés Brevo construites à l'exécution : aucune clé, même factice, dans le dépôt.
+const BREVO_KEY = ['xkeysib', randomBytes(32).toString('hex'), 'test'].join('-');
+const SMTP_KEY = ['xsmtpsib', randomBytes(32).toString('hex'), 'test'].join('-');
+
+/** Un environnement de production complet, avec Brevo. */
+const PRODUCTION = Object.freeze({
+  NODE_ENV: 'production',
+  LOG_LEVEL: 'info',
+  REDIS_URL: 'rediss://redis.example.net:6380',
+  WORKER_CONCURRENCY: '5',
+  DATA_ENCRYPTION_KEY: KEY,
+  EMAIL_TRANSPORT: 'brevo',
+  BREVO_API_KEY: BREVO_KEY,
+  MAIL_FROM_EMAIL: 'no-reply@alyora.com',
+});
 
 /** @param {Record<string, string | undefined>} env */
 function issuesOf(env) {
@@ -43,18 +58,52 @@ describe('loadWorkerConfig', () => {
     ).toEqual(['DATA_ENCRYPTION_KEY', 'REDIS_URL']);
   });
 
-  it('refuses the file transport in production: no provider is set up yet', () => {
+  it('refuses the file transport in production', () => {
     const issues = issuesOf({
-      NODE_ENV: 'production',
-      LOG_LEVEL: 'info',
-      REDIS_URL: 'rediss://redis.example.net:6380',
-      WORKER_CONCURRENCY: '5',
-      DATA_ENCRYPTION_KEY: KEY,
+      ...PRODUCTION,
       EMAIL_TRANSPORT: 'file',
       MAIL_OUTBOX_DIR: '/tmp/outbox',
     });
 
     expect(issues.map((issue) => issue.variable)).toEqual(['EMAIL_TRANSPORT']);
+  });
+
+  it('sends through Brevo in production, from the configured sender', () => {
+    const { config, defaultsApplied } = loadWorkerConfig(PRODUCTION);
+
+    expect(config.email).toEqual({
+      transport: 'brevo',
+      apiKey: BREVO_KEY,
+      sender: { email: 'no-reply@alyora.com', name: 'ALYORA' },
+    });
+    expect(defaultsApplied).toEqual([]);
+    expect(
+      loadWorkerConfig({ ...PRODUCTION, MAIL_FROM_NAME: 'ALYORA Mariages' }).config.email,
+    ).toMatchObject({ sender: { name: 'ALYORA Mariages' } });
+  });
+
+  it('needs the API key and the sender address for Brevo', () => {
+    const issues = issuesOf({ ...PRODUCTION, BREVO_API_KEY: '', MAIL_FROM_EMAIL: undefined });
+
+    expect(issues.map((issue) => issue.variable).sort()).toEqual([
+      'BREVO_API_KEY',
+      'MAIL_FROM_EMAIL',
+    ]);
+  });
+
+  it('refuses an SMTP key, saying why, without ever reporting the key', () => {
+    const issues = issuesOf({ ...PRODUCTION, BREVO_API_KEY: SMTP_KEY });
+
+    expect(issues).toEqual([
+      { variable: 'BREVO_API_KEY', message: expect.stringContaining('SMTP key') },
+    ]);
+    expect(JSON.stringify(issues)).not.toContain(SMTP_KEY);
+  });
+
+  it('refuses a sender that is not an e-mail address', () => {
+    expect(
+      issuesOf({ ...PRODUCTION, MAIL_FROM_EMAIL: 'ALYORA' }).map((issue) => issue.variable),
+    ).toEqual(['MAIL_FROM_EMAIL']);
   });
 
   it('gives no default in production, and never reports a value', () => {
