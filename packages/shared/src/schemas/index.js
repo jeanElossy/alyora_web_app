@@ -36,6 +36,19 @@ export {
 } from './error-response.schema.js';
 export { pingResponseSchema } from './ping.schema.js';
 export { refreshSessionResponseSchema } from './session.schema.js';
+export {
+  backupCodeSchema,
+  backupCodesResponseSchema,
+  changePasswordRequestSchema,
+  loginResultSchema,
+  otpSchema,
+  reauthenticateRequestSchema,
+  twoFactorChallengeResponseSchema,
+  twoFactorDisableRequestSchema,
+  twoFactorEnableRequestSchema,
+  twoFactorSetupResponseSchema,
+  twoFactorVerifyRequestSchema,
+} from './two-factor.schema.js';
 
 // Types réexportés (un typedef JSDoc n'est pas transmis par `export ... from`).
 /** @typedef {import('./error-response.schema.js').ErrorIssue} ErrorIssue */
@@ -51,3 +64,7 @@ export { refreshSessionResponseSchema } from './session.schema.js';
 /** @typedef {import('./auth.schema.js').UpdateProfileRequest} UpdateProfileRequest */
 /** @typedef {import('./auth-response.schema.js').CurrentUser} CurrentUser */
 /** @typedef {import('./auth-response.schema.js').AuthSession} AuthSession */
+/** @typedef {import('./two-factor.schema.js').TwoFactorVerifyRequest} TwoFactorVerifyRequest */
+/** @typedef {import('./two-factor.schema.js').TwoFactorDisableRequest} TwoFactorDisableRequest */
+/** @typedef {import('./two-factor.schema.js').ReauthenticateRequest} ReauthenticateRequest */
+/** @typedef {import('./two-factor.schema.js').ChangePasswordRequest} ChangePasswordRequest */

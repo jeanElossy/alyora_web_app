@@ -3,6 +3,7 @@ import {
   anonymousContext,
   createTestAuthServices,
   registration,
+  sessionTokens,
   useAuthDatabase,
   userContext,
 } from '../../../../test/helpers/auth.js';
@@ -19,10 +20,9 @@ const NEW_PASSWORD = 'Les pirogues rentrent au port';
 async function withResetLink() {
   const deps = createTestAuthServices();
   await deps.services.registration.register(anonymousContext(), registration());
-  const tokens = await deps.services.login.login(anonymousContext(), {
-    email: EMAIL,
-    password: PASSWORD,
-  });
+  const tokens = sessionTokens(
+    await deps.services.login.login(anonymousContext(), { email: EMAIL, password: PASSWORD }),
+  );
   deps.mailer.clear();
   await deps.services.passwordReset.requestReset(anonymousContext(), { email: EMAIL });
   const token = tokenFrom(deps.mailer.to(EMAIL).at(-1), 'resetPassword');

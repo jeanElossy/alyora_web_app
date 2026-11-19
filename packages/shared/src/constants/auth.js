@@ -65,3 +65,21 @@ export const CSRF_HEADER = 'X-CSRF-Token';
 
 /** En-tête qui rend une requête idempotente (voir la règle de concurrence du projet). */
 export const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
+
+/** Nombre de codes de secours remis à l'activation de la 2FA, chacun à usage unique. */
+export const BACKUP_CODE_COUNT = 8;
+
+/**
+ * Durée de validité de l'étape 2FA d'une connexion (mot de passe vérifié, code attendu) :
+ * 5 minutes.
+ */
+export const TWO_FACTOR_CHALLENGE_TTL_SECONDS = 5 * 60;
+
+/** Codes faux tolérés pour une même étape 2FA, avant qu'elle soit annulée. */
+export const TWO_FACTOR_CHALLENGE_MAX_ATTEMPTS = 5;
+
+/**
+ * Fraîcheur exigée de la dernière authentification complète pour une opération sensible
+ * (activer ou désactiver la 2FA, changer le mot de passe) : 10 minutes.
+ */
+export const RECENT_AUTH_MINUTES = 10;

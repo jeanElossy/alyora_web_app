@@ -11,6 +11,12 @@ export const ERROR_CATALOG = Object.freeze({
   // Même code, même statut et même message que l'adresse existe ou non, que le compte soit
   // verrouillé ou non : la réponse ne révèle jamais l'existence d'un compte.
   INVALID_CREDENTIALS: Object.freeze({ httpStatus: 401, message: 'Invalid credentials' }),
+  INVALID_TWO_FACTOR_CODE: Object.freeze({ httpStatus: 401, message: 'Invalid two-factor code' }),
+  // L'opération demande une authentification complète récente : POST /auth/reauthenticate.
+  REAUTHENTICATION_REQUIRED: Object.freeze({
+    httpStatus: 401,
+    message: 'Recent authentication required',
+  }),
   FORBIDDEN: Object.freeze({ httpStatus: 403, message: 'Access denied' }),
   EMAIL_NOT_VERIFIED: Object.freeze({ httpStatus: 403, message: 'Email address not verified' }),
   CSRF_INVALID: Object.freeze({ httpStatus: 403, message: 'Missing or invalid CSRF token' }),
@@ -18,6 +24,10 @@ export const ERROR_CATALOG = Object.freeze({
   // pas renseigner un attaquant sur l'état d'un jeton.
   INVALID_TOKEN: Object.freeze({ httpStatus: 400, message: 'Invalid or expired token' }),
   NOT_FOUND: Object.freeze({ httpStatus: 404, message: 'Resource not found' }),
+  TWO_FACTOR_CONFLICT: Object.freeze({
+    httpStatus: 409,
+    message: 'Two-factor authentication is not in the expected state',
+  }),
   IDEMPOTENCY_CONFLICT: Object.freeze({
     httpStatus: 409,
     message: 'Idempotency key reused for another request, or request still in progress',

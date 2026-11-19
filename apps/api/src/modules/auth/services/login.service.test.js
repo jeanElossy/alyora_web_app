@@ -3,6 +3,7 @@ import {
   anonymousContext,
   createTestAuthServices,
   registration,
+  sessionTokens,
   useAuthDatabase,
 } from '../../../../test/helpers/auth.js';
 import { AuthSession } from '../models/auth-session.model.js';
@@ -32,7 +33,7 @@ describe('login service', () => {
   it('opens a session and returns an access token and a refresh token', async () => {
     const deps = await withAccount();
 
-    const tokens = await attempt(deps, PASSWORD);
+    const tokens = sessionTokens(await attempt(deps, PASSWORD));
 
     expect(tokens.refreshToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
     const claims = await deps.accessTokens.verify(tokens.accessToken);
@@ -138,7 +139,7 @@ describe('login service', () => {
   it('never writes the password, the address or a token in the logs', async () => {
     const deps = await withAccount();
 
-    const tokens = await attempt(deps, PASSWORD);
+    const tokens = sessionTokens(await attempt(deps, PASSWORD));
     await attempt(deps, 'mauvais mot de passe').catch(() => {});
 
     for (const secret of [PASSWORD, EMAIL, tokens.refreshToken, tokens.accessToken]) {

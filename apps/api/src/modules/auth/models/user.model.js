@@ -29,6 +29,22 @@ const userSchema = new mongoose.Schema(
     twoFactorEnabled: { type: Boolean, default: false },
     /** Chiffré au repos (AES-256-GCM, voir secret-box.js). Jamais en clair. */
     twoFactorSecret: { type: String, default: null, select: false },
+    /** Secret en cours de réglage (2fa/setup), chiffré, actif seulement après 2fa/enable. */
+    twoFactorPendingSecret: { type: String, default: null, select: false },
+    /** Dernier pas TOTP accepté : un code ne sert qu'une fois, même dans sa fenêtre. */
+    twoFactorLastStep: { type: Number, default: null, select: false },
+    /** Codes de secours : empreintes à clé seulement, chacun à usage unique. */
+    twoFactorBackupCodes: {
+      type: [
+        new mongoose.Schema(
+          { hash: { type: String, required: true }, usedAt: { type: Date, default: null } },
+          { _id: false },
+        ),
+      ],
+      default: [],
+      select: false,
+    },
+    twoFactorEnabledAt: { type: Date, default: null },
     /** Échecs de connexion consécutifs, remis à zéro par une connexion réussie. */
     failedLoginCount: { type: Number, default: 0 },
     /** Verrouillage temporaire, levé automatiquement à cette date. */

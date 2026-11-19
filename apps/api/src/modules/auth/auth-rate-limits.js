@@ -1,4 +1,5 @@
 import { ipKeyGenerator } from 'express-rate-limit';
+import { getAuth } from '../../lib/auth/require-auth.js';
 import { getValidated } from '../../lib/http/validate.js';
 import { createRateLimiter } from '../../lib/http/rate-limit.js';
 
@@ -28,6 +29,13 @@ export const AUTH_RATE_LIMITS = Object.freeze({
   emailPerIp: { windowMs: HOUR, limit: 20 },
   /** Jetons reçus par e-mail (vérification, réinitialisation). */
   tokenPerIp: { windowMs: 15 * MINUTE, limit: 20 },
+  /** Seconde étape de la connexion (codes 2FA), en plus des 5 essais par étape. */
+  twoFactorPerIp: { windowMs: 15 * MINUTE, limit: 20 },
+  /**
+   * Opérations qui vérifient un secret pour un compte connecté (réauthentification, activation
+   * et désactivation de la 2FA) : 5 essais par 15 minutes et par compte.
+   */
+  secretPerAccount: { windowMs: 15 * MINUTE, limit: 5 },
 });
 
 /**
@@ -82,6 +90,13 @@ export function createAuthRateLimits({ createStore, keyedHasher, logger }) {
       (req) => `${ip(req)}:${address(req)}`,
     ),
     tokenPerIp: limiter('auth-token-ip', AUTH_RATE_LIMITS.tokenPerIp),
+    twoFactorPerIp: limiter('auth-2fa-ip', AUTH_RATE_LIMITS.twoFactorPerIp),
+    secretPerAccount: limiter(
+      'auth-secret-account',
+      AUTH_RATE_LIMITS.secretPerAccount,
+      // Après requireAuth : la clé est le compte, pas l'IP (un appareil peut changer de réseau).
+      (req) => keyedHasher.digest('rate-limit', `user:${getAuth(req).userId}`),
+    ),
   };
 }
 

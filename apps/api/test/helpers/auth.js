@@ -7,6 +7,7 @@ import { createAccessTokens } from '../../src/lib/auth/access-token.js';
 import { createPasswordHasher } from '../../src/lib/auth/password-hasher.js';
 import { createServiceContext } from '../../src/lib/context/service-context.js';
 import { createKeyedHasher } from '../../src/lib/crypto/keyed-hash.js';
+import { createSecretBox } from '../../src/lib/crypto/secret-box.js';
 import { CSRF_COOKIE, REFRESH_COOKIE } from '../../src/lib/http/cookies.js';
 import { createAuthEmails } from '../../src/modules/auth/auth-emails.js';
 import { createAuthServices } from '../../src/modules/auth/services/auth-services.js';
@@ -70,8 +71,22 @@ export function createTestAuthServices() {
     passwordHasher: createFastPasswordHasher(),
     accessTokens,
     keyedHasher: createKeyedHasher(TEST_SECRETS.HASH_SECRET),
+    secretBox: createSecretBox(Buffer.from(TEST_SECRETS.DATA_ENCRYPTION_KEY, 'base64')),
   });
   return { services, clock, mailer, logs, accessTokens };
+}
+
+/**
+ * Résultat d'une connexion sans 2FA : la session. Lève si la connexion attend un code.
+ *
+ * @param {import('../../src/modules/auth/services/login.service.js').LoginResult} result
+ * @returns {import('../../src/modules/auth/services/session-tokens.js').IssuedTokens}
+ */
+export function sessionTokens(result) {
+  if ('challengeToken' in result) {
+    throw new Error('The login expects a second factor');
+  }
+  return result;
 }
 
 /** Contexte d'une requête anonyme, comme le construit le controller. */

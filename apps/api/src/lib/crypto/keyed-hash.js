@@ -5,7 +5,7 @@ import { createHmac, hkdfSync } from 'node:crypto';
  * empreinte faite pour un usage ne vaut rien pour un autre.
  */
 export const KEYED_HASH_PURPOSES = Object.freeze(
-  /** @type {const} */ (['ip', 'rate-limit', 'csrf', 'idempotency']),
+  /** @type {const} */ (['ip', 'rate-limit', 'csrf', 'idempotency', 'backup-code']),
 );
 
 /** @typedef {(typeof KEYED_HASH_PURPOSES)[number]} KeyedHashPurpose */

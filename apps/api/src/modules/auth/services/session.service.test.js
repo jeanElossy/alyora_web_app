@@ -5,6 +5,7 @@ import {
   anonymousContext,
   createTestAuthServices,
   registration,
+  sessionTokens,
   useAuthDatabase,
   userContext,
 } from '../../../../test/helpers/auth.js';
@@ -21,10 +22,9 @@ const PASSWORD = 'Le soleil se lève sur la lagune';
 async function signedIn() {
   const deps = createTestAuthServices();
   await deps.services.registration.register(anonymousContext(), registration());
-  const tokens = await deps.services.login.login(anonymousContext(), {
-    email: EMAIL,
-    password: PASSWORD,
-  });
+  const tokens = sessionTokens(
+    await deps.services.login.login(anonymousContext(), { email: EMAIL, password: PASSWORD }),
+  );
   const claims = await deps.accessTokens.verify(tokens.accessToken);
   deps.mailer.clear();
   return { ...deps, tokens, claims, context: userContext(claims.userId, claims.sessionId) };
@@ -142,10 +142,12 @@ describe('session service: listing and revocation', () => {
       anonymousContext(),
       registration({ email: 'intrus@exemple.ci' }),
     );
-    const intruderTokens = await intruder.services.login.login(anonymousContext(), {
-      email: 'intrus@exemple.ci',
-      password: PASSWORD,
-    });
+    const intruderTokens = sessionTokens(
+      await intruder.services.login.login(anonymousContext(), {
+        email: 'intrus@exemple.ci',
+        password: PASSWORD,
+      }),
+    );
     const intruderClaims = await intruder.accessTokens.verify(intruderTokens.accessToken);
     const intruderContext = userContext(intruderClaims.userId, intruderClaims.sessionId);
 

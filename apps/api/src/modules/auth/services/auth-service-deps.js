@@ -9,6 +9,8 @@
  * @property {import('../../../lib/auth/password-hasher.js').PasswordHasher} passwordHasher
  * @property {import('../../../lib/auth/access-token.js').AccessTokens} accessTokens
  * @property {import('../../../lib/crypto/keyed-hash.js').KeyedHasher} keyedHasher
+ * @property {import('../../../lib/crypto/secret-box.js').SecretBox} secretBox Chiffrement des
+ *   secrets 2FA.
  */
 
 /** @typedef {import('../../../lib/context/service-context.js').ServiceContext} ServiceContext */
