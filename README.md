@@ -218,6 +218,35 @@ du projet, fixées dans `packages/shared`, et non des réglages.
 
 Toute variable `VITE_*` se retrouve dans le JavaScript public : aucun secret côté web.
 
+## Déploiement
+
+Pour l'instant, deux services, tous deux déployés depuis `main` :
+
+- **Web sur Vercel** (https://alyora-web-app.vercel.app), dossier racine `apps/web`,
+  `VITE_API_BASE_URL` vide. `apps/web/vercel.json` :
+  - transmet `/api/*` à l'API sur Render. Le navigateur ne parle qu'à une seule origine, donc
+    il accepte et renvoie les cookies de refresh et CSRF (`SameSite=Lax`). Sur deux domaines
+    `vercel.app` et `onrender.com`, il les refuserait.
+  - sert `index.html` à toute adresse qui n'est pas un fichier du build : liens directs et
+    liens des e-mails (`/verifier-email`…).
+- **API sur Render** (https://alyora-api.onrender.com) :
+
+  | Réglage            | Valeur                                         |
+  | ------------------ | ---------------------------------------------- |
+  | Build Command      | `pnpm install --frozen-lockfile`               |
+  | Start Command      | `pnpm --filter @alyora/api start`              |
+  | Pre-Deploy Command | `pnpm --filter @alyora/api migrate:up`         |
+  | Health Check Path  | `/health`                                      |
+  | `TRUST_PROXY`      | `2` : le proxy de Vercel, puis celui de Render |
+  | `CORS_ORIGINS`     | `https://alyora-web-app.vercel.app`            |
+  | `WEB_APP_URL`      | `https://alyora-web-app.vercel.app`            |
+  | `COOKIE_DOMAIN`    | absent : cookies limités au site Vercel        |
+
+**Limite connue** : l'API reste joignable directement sur `onrender.com`. En l'appelant sans
+passer par Vercel, un client peut choisir l'IP que voient les limites par IP (le verrouillage
+des comptes, lui, tient). À terme, il faudra un domaine propre (`app.` et `api.`, avec
+`COOKIE_DOMAIN`), un navigateur qui appelle `api.` directement, et `TRUST_PROXY=1`.
+
 ## Conventions
 
 - **Commits** : [Conventional Commits](https://www.conventionalcommits.org/), vérifiés
