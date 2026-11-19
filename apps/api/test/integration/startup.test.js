@@ -8,17 +8,27 @@ import { startServer } from '../../src/bootstrap.js';
 import { testMongoUri } from '../helpers/db.js';
 import { createLogCapture } from '../helpers/log-capture.js';
 import { MONGODB_TEST_VERSION } from '../setup/global-setup.js';
+import { TEST_SECRETS } from '../helpers/app.js';
 
 const SERVER_ENTRY = fileURLToPath(new URL('../../src/server.js', import.meta.url));
 // Fausse valeur de test, cherchée dans la sortie pour prouver qu'elle n'y apparaît jamais.
 const REDIS_PASSWORD = 'R3disS3cret-marker'; // gitleaks:allow
 
-/** @param {Record<string, string>} env */
+/**
+ * Démarre l'API avec cet environnement, complété des secrets de test (tirés au hasard).
+ *
+ * @param {Record<string, string>} env
+ */
 function startWith(env) {
   const logs = createLogCapture();
   const exit = vi.fn();
   const processRef = new EventEmitter();
-  const started = startServer({ env, exit, processRef, destination: logs.destination });
+  const started = startServer({
+    env: { ...TEST_SECRETS, ...env },
+    exit,
+    processRef,
+    destination: logs.destination,
+  });
   return { started, exit, logs };
 }
 

@@ -16,7 +16,12 @@ import { API_V1_PREFIX, createV1Router } from './v1-router.js';
  * @property {import('./config/load-config.js').AppConfig} config
  * @property {import('pino').Logger} logger
  * @property {import('./lib/health/readiness.js').ReadinessChecks} readinessChecks
- * @property {import('express-rate-limit').Store} rateLimitStore
+ * @property {import('express-rate-limit').Store} rateLimitStore Limite globale de /api/v1.
+ * @property {(name: string) => import('express-rate-limit').Store} createRateLimitStore
+ *   Stockage d'une limite nommée (connexion, inscription...).
+ * @property {import('./lib/mail/mail-queue.js').Mailer} mailer
+ * @property {{ now: () => Date }} [clock]
+ * @property {import('./lib/auth/password-hasher.js').PasswordHasher} [passwordHasher]
  */
 
 /**

@@ -24,6 +24,7 @@ export const NON_PRODUCTION_DEFAULTS = Object.freeze({
     CORS_ORIGINS: 'http://localhost:5173',
     TRUST_PROXY: 'false',
     MONGODB_MAX_POOL_SIZE: '10',
+    WEB_APP_URL: 'http://localhost:5173',
   }),
   test: Object.freeze({
     PORT: '3000',
@@ -31,8 +32,31 @@ export const NON_PRODUCTION_DEFAULTS = Object.freeze({
     CORS_ORIGINS: 'http://localhost:5173',
     TRUST_PROXY: 'false',
     MONGODB_MAX_POOL_SIZE: '5',
+    WEB_APP_URL: 'http://localhost:5173',
   }),
 });
+
+/**
+ * Secret de signature ou de dérivation : au moins 32 caractères (par exemple la sortie de
+ * `openssl rand -base64 32`). Jamais de valeur par défaut, dans aucun environnement : une
+ * valeur connue de tous rendrait les jetons falsifiables.
+ */
+const secret = z.string().min(32, 'must be at least 32 characters (openssl rand -base64 32)');
+
+/** Clé AES-256 : exactement 32 octets, encodés en base64 (`openssl rand -base64 32`). */
+const encryptionKey = z
+  .string()
+  .regex(/^[A-Za-z0-9+/]{43}=$/, 'must be 32 bytes encoded in base64 (openssl rand -base64 32)')
+  .transform((value) => Buffer.from(value, 'base64'));
+
+/**
+ * Domaine parent des cookies (« alyora.ci »), pour qu'ils servent à app. et api. Un point
+ * initial (« .alyora.ci », ancienne notation) est accepté et retiré.
+ */
+const cookieDomain = z
+  .string()
+  .regex(/^\.?(?!-)[a-z0-9-]+(\.[a-z0-9-]+)+$/, 'must be a domain name, e.g. alyora.ci')
+  .transform((value) => value.replace(/^\./, ''));
 
 /**
  * Liste d'origines navigateur séparées par des virgules ("https://app.example.com"), chacune
@@ -81,6 +105,11 @@ export const envSchema = z.object({
   REDIS_URL: z.string().regex(/^rediss?:\/\/\S+$/, 'must be a redis:// or rediss:// URL'),
   CORS_ORIGINS: corsOrigins,
   TRUST_PROXY: trustProxy,
+  ACCESS_TOKEN_SECRET: secret,
+  HASH_SECRET: secret,
+  DATA_ENCRYPTION_KEY: encryptionKey,
+  WEB_APP_URL: z.string().refine(isExactOrigin, 'must be an http(s) origin without path'),
+  COOKIE_DOMAIN: cookieDomain.optional(),
 });
 
 /** Noms des variables lues par l'API. */

@@ -8,8 +8,13 @@
   "errors": {
     "VALIDATION_ERROR": "Certaines informations sont invalides. Vérifiez les champs signalés.",
     "UNAUTHENTICATED": "Votre session a expiré. Reconnectez-vous pour continuer.",
+    "INVALID_CREDENTIALS": "Adresse e-mail ou mot de passe incorrect.",
     "FORBIDDEN": "Vous n’avez pas accès à cette page.",
+    "EMAIL_NOT_VERIFIED": "Confirmez d’abord votre adresse e-mail, grâce au lien que nous vous avons envoyé.",
+    "CSRF_INVALID": "La page a expiré. Rechargez-la, puis réessayez.",
+    "INVALID_TOKEN": "Ce lien n’est plus valide. Demandez-en un nouveau.",
     "NOT_FOUND": "La ressource demandée est introuvable.",
+    "IDEMPOTENCY_CONFLICT": "Votre demande est déjà en cours de traitement. Patientez quelques instants.",
     "PAYLOAD_TOO_LARGE": "Le contenu envoyé est trop volumineux.",
     "RATE_LIMITED": "Trop de tentatives. Patientez quelques instants avant de réessayer.",
     "INTERNAL_ERROR": "Une erreur inattendue est survenue. Réessayez dans quelques instants.",

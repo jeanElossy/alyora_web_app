@@ -32,6 +32,21 @@ export function corsWhitelist(allowedOrigins) {
   });
 }
 
+/**
+ * Réponses qui peuvent porter un secret (jeton, données du compte) : jamais mises en cache, ni
+ * par le navigateur ni par un intermédiaire, et jamais compressées. `no-transform` fait
+ * renoncer le middleware de compression : compresser un secret à côté d'une donnée choisie
+ * par l'attaquant ouvre la voie aux attaques de type BREACH.
+ *
+ * @returns {import('express').RequestHandler}
+ */
+export function noStore() {
+  return (_req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-transform');
+    next();
+  };
+}
+
 /** Compression des réponses (gzip/deflate) au-delà de 1 ko. */
 export function responseCompression() {
   return compression();

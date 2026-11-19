@@ -11,10 +11,17 @@ describe('@alyora/api library entry point', () => {
     expect(Object.keys(api).sort()).toEqual(
       [
         'AppError',
+        'DecryptionError',
+        'MAIL_JOB_NAME',
+        'MAIL_QUEUE_NAME',
+        'createFileTransport',
         'createLogger',
+        'createMailProcessor',
+        'createSecretBox',
         'getCorrelationId',
         'getRequestContext',
         'isAppError',
+        'mailMessageSchema',
         'runWithContext',
       ].sort(),
     );

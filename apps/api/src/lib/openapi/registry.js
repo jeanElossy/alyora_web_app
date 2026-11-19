@@ -27,6 +27,12 @@ import { validate } from '../http/validate.js';
  * @property {RouteRequest} [request]
  * @property {Record<number, RouteResponse>} responses Réponses en cas de succès. Les réponses
  *   d'erreur sont toujours documentées avec le format d'erreur partagé.
+ * @property {import('express').RequestHandler[]} [before] Protections qui passent avant la
+ *   validation, sans lire le corps : CSRF, limites par IP.
+ * @property {import('express').RequestHandler[]} [after] Gardes qui suivent la validation,
+ *   dans cet ordre : authentification, permission, limites qui lisent le corps validé,
+ *   idempotence.
+ * @property {boolean} [authenticated] La route exige un access token (documentation).
  * @property {import('express').RequestHandler} handler Controller.
  */
 
@@ -41,8 +47,8 @@ export function defineRoute(definition) {
 }
 
 /**
- * Monte des routes sur un routeur : les validateurs d'abord (params, query, body), puis le
- * controller.
+ * Monte des routes sur un routeur, dans l'ordre : protections (`before`), validateurs
+ * (params, query, body), gardes (`after` : auth, permission...), puis le controller.
  *
  * @param {import('express').Router} router
  * @param {ReadonlyArray<RouteDefinition>} routes
@@ -57,6 +63,8 @@ export function mountRoutes(router, routes) {
         validators.push(validate(schema, source));
       }
     }
-    router.route(route.path)[route.method](...validators, route.handler);
+    router
+      .route(route.path)
+      [route.method](...(route.before ?? []), ...validators, ...(route.after ?? []), route.handler);
   }
 }
