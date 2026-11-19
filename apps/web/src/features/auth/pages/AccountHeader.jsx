@@ -18,7 +18,7 @@ export function AccountHeader({ title, intro }) {
   ];
 
   return (
-    <header>
+    <header className="animate-rise">
       <p className="text-xs font-medium tracking-[0.24em] text-champagne-deep uppercase">
         {t('account.eyebrow')}
       </p>

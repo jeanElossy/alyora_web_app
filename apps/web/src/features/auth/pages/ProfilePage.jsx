@@ -123,7 +123,7 @@ export function ProfilePage() {
     <div className={`${CONTAINER} py-12 sm:py-16`}>
       <title>{t('profile.documentTitle')}</title>
       <AccountHeader title={t('profile.title')} intro={t('profile.intro')} />
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="mt-10 grid animate-rise gap-8 [animation-delay:120ms] lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card>
           {me.data ? (
             <ProfileForm user={me.data} />

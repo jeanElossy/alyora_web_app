@@ -44,15 +44,17 @@ export function HomePage() {
         className={`${CONTAINER} grid items-center gap-14 py-14 sm:py-20 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20 lg:py-28`}
       >
         <div>
-          <p className="text-xs font-medium tracking-[0.26em] text-champagne-deep uppercase">
+          <p className="animate-rise text-xs font-medium tracking-[0.26em] text-champagne-deep uppercase">
             {t('home.eyebrow')}
           </p>
-          <h1 className="mt-6 font-display text-5xl leading-[1.04] font-semibold text-forest sm:text-6xl lg:text-7xl">
+          <h1 className="mt-6 animate-rise font-display [animation-delay:100ms] text-5xl leading-[1.04] font-semibold text-forest sm:text-6xl lg:text-7xl">
             {t('home.title')}{' '}
             <span className="block text-champagne-deep">{t('home.titleAccent')}</span>
           </h1>
-          <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted">{t('home.intro')}</p>
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <p className="mt-7 max-w-xl animate-rise text-lg leading-relaxed text-muted [animation-delay:200ms]">
+            {t('home.intro')}
+          </p>
+          <div className="mt-10 flex animate-rise flex-col gap-3 [animation-delay:300ms] sm:flex-row sm:items-center">
             <Link
               to="/organisateur"
               className="inline-flex items-center justify-center rounded-full bg-forest px-7 py-4 text-sm font-medium text-ivory transition-colors hover:bg-charcoal"
@@ -71,7 +73,7 @@ export function HomePage() {
           photo={PHOTOS.ceremony}
           sizes="(min-width: 1024px) 26rem, (min-width: 640px) 22rem, 80vw"
           priority
-          className="mx-auto w-full max-w-[18rem] sm:max-w-sm lg:max-w-md"
+          className="mx-auto w-full max-w-[18rem] animate-rise [animation-delay:250ms] sm:max-w-sm lg:max-w-md"
         />
       </section>
 
@@ -83,24 +85,26 @@ export function HomePage() {
         <div className={`${CONTAINER} py-16 sm:py-24`}>
           <h2
             id="trois-temps-titre"
-            className="max-w-xl font-display text-3xl leading-tight font-semibold text-forest sm:text-4xl"
+            className="reveal-on-scroll max-w-xl font-display text-3xl leading-tight font-semibold text-forest sm:text-4xl"
           >
             {t('home.steps.title')}
           </h2>
           <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-8">
             {STEPS.map((step, index) => (
-              <li key={step}>
-                <img
-                  src={PHOTOS[step].src}
-                  srcSet={PHOTOS[step].srcSet}
-                  sizes="(min-width: 1152px) 22rem, (min-width: 640px) 30vw, 90vw"
-                  width={PHOTOS[step].width}
-                  height={PHOTOS[step].height}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  className="aspect-[4/3] w-full rounded-2xl object-cover"
-                />
+              <li key={step} className="group reveal-on-scroll">
+                <div className="overflow-hidden rounded-2xl">
+                  <img
+                    src={PHOTOS[step].src}
+                    srcSet={PHOTOS[step].srcSet}
+                    sizes="(min-width: 1152px) 22rem, (min-width: 640px) 30vw, 90vw"
+                    width={PHOTOS[step].width}
+                    height={PHOTOS[step].height}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-[4/3] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                </div>
                 <div className="mt-6 flex items-baseline gap-4 border-t border-charcoal/15 pt-5">
                   <span
                     aria-hidden="true"
