@@ -1,3 +1,4 @@
+export { designSystemDemoFormSchema } from './demo.schema.js';
 export {
   errorDetailsSchema,
   errorIssueSchema,
