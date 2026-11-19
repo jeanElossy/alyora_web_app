@@ -17,9 +17,29 @@ const authByRequest = new WeakMap();
  *
  * @param {object} deps
  * @param {import('./access-token.js').AccessTokens} deps.accessTokens
+ * @param {{ now: () => Date }} deps.clock
  */
-export function createAuthGuards({ accessTokens }) {
+export function createAuthGuards({ accessTokens, clock }) {
   return {
+    /**
+     * Exige une authentification complète (mot de passe, puis 2FA si elle est active) datant
+     * de moins de `minutes`, sinon REAUTHENTICATION_REQUIRED : le client fait confirmer le
+     * mot de passe (POST /auth/reauthenticate), puis rejoue la requête. À placer après
+     * requireAuth, sur les opérations sensibles.
+     *
+     * @param {number} minutes
+     * @returns {import('express').RequestHandler}
+     */
+    requireRecentAuth(minutes) {
+      return (req, _res, next) => {
+        const ageSeconds = clock.now().getTime() / 1000 - getAuth(req).authTime;
+        if (ageSeconds > minutes * 60) {
+          throw new AppError('REAUTHENTICATION_REQUIRED');
+        }
+        next();
+      };
+    },
+
     /**
      * Exige un access token valide. Un compte dont l'adresse n'est pas vérifiée est refusé
      * (EMAIL_NOT_VERIFIED), sauf sur les quelques routes qui lui restent ouvertes

@@ -6,7 +6,7 @@ import {
   emailRequestSchema,
   emailVerifiedResponseSchema,
   loginRequestSchema,
-  loginResponseSchema,
+  loginResultSchema,
   passwordResetResponseSchema,
   refreshSessionResponseSchema,
   registerRequestSchema,
@@ -98,7 +98,12 @@ export function createAuthRoutes({ controller, guards, csrf, idempotency, limits
       before: [privateResponse, requireCsrf, limits.loginPerIp],
       request: { body: loginRequestSchema },
       after: [limits.loginPerAccount],
-      responses: { 200: { description: 'Signed in', schema: loginResponseSchema } },
+      responses: {
+        200: {
+          description: 'Signed in, or the two-factor step when 2FA is on',
+          schema: loginResultSchema,
+        },
+      },
       handler: controller.login,
     }),
     defineRoute({

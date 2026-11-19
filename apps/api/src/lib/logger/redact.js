@@ -32,6 +32,10 @@ const SENSITIVE_SUBSTRINGS = Object.freeze([
   'iban',
   'card',
   'cvv',
+  // Second facteur : codes de secours et codes TOTP.
+  'backupcode',
+  'recoverycode',
+  'totp',
 ]);
 
 /**

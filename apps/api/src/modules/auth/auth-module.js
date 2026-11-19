@@ -2,6 +2,7 @@ import { createAccessTokens } from '../../lib/auth/access-token.js';
 import { createPasswordHasher } from '../../lib/auth/password-hasher.js';
 import { createAuthGuards } from '../../lib/auth/require-auth.js';
 import { createKeyedHasher } from '../../lib/crypto/keyed-hash.js';
+import { createSecretBox } from '../../lib/crypto/secret-box.js';
 import { createCsrfProtection } from '../../lib/http/csrf.js';
 import { createIdempotency } from '../../lib/idempotency/idempotent.js';
 import { createAuthEmails } from './auth-emails.js';
@@ -9,6 +10,8 @@ import { createAuthRateLimits } from './auth-rate-limits.js';
 import { createAuthController } from './auth.controller.js';
 import { createAuthRoutes } from './auth.routes.js';
 import { createAuthServices } from './services/auth-services.js';
+import { createTwoFactorController } from './two-factor.controller.js';
+import { createTwoFactorRoutes } from './two-factor.routes.js';
 
 /** Horloge du système ; les tests en injectent une autre pour avancer dans le temps. */
 export const systemClock = Object.freeze({ now: () => new Date() });
@@ -39,7 +42,7 @@ export function createAuthModule({
 }) {
   const keyedHasher = createKeyedHasher(config.auth.hashSecret);
   const accessTokens = createAccessTokens({ secret: config.auth.accessTokenSecret, clock });
-  const guards = createAuthGuards({ accessTokens });
+  const guards = createAuthGuards({ accessTokens, clock });
   const csrf = createCsrfProtection({ keyedHasher, cookieDomain: config.auth.cookieDomain });
   const services = createAuthServices({
     clock,
@@ -49,19 +52,31 @@ export function createAuthModule({
     passwordHasher,
     accessTokens,
     keyedHasher,
+    secretBox: createSecretBox(config.auth.dataEncryptionKey),
   });
-  const routes = createAuthRoutes({
-    controller: createAuthController({
-      services,
-      csrf,
-      cookieDomain: config.auth.cookieDomain,
-      logger,
-    }),
-    guards,
+  const controller = createAuthController({
+    services,
     csrf,
-    idempotency: createIdempotency({ keyedHasher, clock, logger }),
-    limits: createAuthRateLimits({ createStore: createRateLimitStore, keyedHasher, logger }),
+    cookieDomain: config.auth.cookieDomain,
+    logger,
   });
+  // Une seule instance des limites : les routes qui partagent une limite partagent ses compteurs.
+  const limits = createAuthRateLimits({ createStore: createRateLimitStore, keyedHasher, logger });
+  const routes = Object.freeze([
+    ...createAuthRoutes({
+      controller,
+      guards,
+      csrf,
+      idempotency: createIdempotency({ keyedHasher, clock, logger }),
+      limits,
+    }),
+    ...createTwoFactorRoutes({
+      controller: createTwoFactorController({ services, auth: controller }),
+      guards,
+      csrf,
+      limits,
+    }),
+  ]);
   return { routes, guards, services, accessTokens };
 }
 

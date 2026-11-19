@@ -131,14 +131,20 @@ export function createAuthEmails({ webAppUrl }) {
         },
       }),
 
-    /** @param {Recipient} to @param {Date} changedAt */
-    passwordChanged: (to, changedAt) =>
+    /**
+     * @param {Recipient} to
+     * @param {Date} changedAt
+     * @param {{ otherDevicesOnly?: boolean }} [options] Changé depuis un appareil resté connecté.
+     */
+    passwordChanged: (to, changedAt, { otherDevicesOnly = false } = {}) =>
       compose({
         to,
         subject: 'Votre mot de passe a été modifié',
         paragraphs: [
           `Le mot de passe de votre compte ALYORA a été modifié le ${formatDate(changedAt, to.timezone)}.`,
-          'Par sécurité, tous vos appareils ont été déconnectés.',
+          otherDevicesOnly
+            ? 'Par sécurité, vos autres appareils ont été déconnectés.'
+            : 'Par sécurité, tous vos appareils ont été déconnectés.',
           'Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe.',
         ],
         action: {
@@ -161,6 +167,31 @@ export function createAuthEmails({ webAppUrl }) {
           label: 'Choisir un nouveau mot de passe',
           url: link(AUTH_WEB_PATHS.forgotPassword),
         },
+      }),
+
+    /** @param {Recipient} to */
+    twoFactorEnabled: (to) =>
+      compose({
+        to,
+        subject: 'Double authentification activée',
+        paragraphs: [
+          'La double authentification est maintenant active sur votre compte ALYORA : chaque connexion demandera aussi le code de votre application.',
+          'Gardez vos codes de secours en lieu sûr : chacun permet une connexion si vous perdez votre téléphone. Vos autres appareils ont été déconnectés.',
+          'Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe.',
+        ],
+        action: { label: 'Sécuriser mon compte', url: link(AUTH_WEB_PATHS.forgotPassword) },
+      }),
+
+    /** @param {Recipient} to */
+    twoFactorDisabled: (to) =>
+      compose({
+        to,
+        subject: 'Double authentification désactivée',
+        paragraphs: [
+          'La double authentification a été désactivée sur votre compte ALYORA : la connexion ne demande plus que votre mot de passe.',
+          'Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe, puis réactivez-la.',
+        ],
+        action: { label: 'Sécuriser mon compte', url: link(AUTH_WEB_PATHS.forgotPassword) },
       }),
 
     /** @param {Recipient} to */

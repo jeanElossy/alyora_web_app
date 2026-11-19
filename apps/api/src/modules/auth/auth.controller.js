@@ -70,6 +70,10 @@ export function createAuthController({ services, csrf, cookieDomain, logger }) {
   };
 
   return {
+    sendTokens,
+    authenticated,
+    anonymous,
+
     /** @type {import('express').RequestHandler} */
     csrfToken: (_req, res) => {
       res.status(200).json({ csrfToken: csrf.issue(res) });
@@ -110,11 +114,18 @@ export function createAuthController({ services, csrf, cookieDomain, logger }) {
 
     /** @type {import('express').RequestHandler} */
     login: async (req, res) => {
-      const tokens = await services.login.login(
+      const result = await services.login.login(
         anonymous(req),
         /** @type {import('@alyora/shared/schemas').LoginRequest} */ (getValidated(req, 'body')),
       );
-      sendTokens(res, tokens);
+      if ('challengeToken' in result) {
+        // 2FA active : pas encore de session, ni de cookie. Le code est attendu sur 2fa/verify.
+        res
+          .status(200)
+          .json({ status: 'two_factor_required', challengeToken: result.challengeToken });
+        return;
+      }
+      sendTokens(res, result);
     },
 
     /** @type {import('express').RequestHandler} */
