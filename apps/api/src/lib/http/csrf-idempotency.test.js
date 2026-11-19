@@ -14,8 +14,8 @@ const keyedHasher = createKeyedHasher(randomBytes(32).toString('base64'));
 describe('CSRF protection (signed double submit)', () => {
   const csrf = createCsrfProtection({ keyedHasher, cookieDomain: undefined });
   const { app } = buildPipelineApp((router) => {
-    router.get('/csrf', (_req, res) => {
-      res.json({ csrfToken: csrf.issue(res) });
+    router.get('/csrf', (req, res) => {
+      res.json({ csrfToken: csrf.issue(req, res) });
     });
     router.post('/change', csrf.requireCsrf(), (_req, res) => {
       res.json({ changed: true });
@@ -78,8 +78,8 @@ describe('CSRF protection (signed double submit)', () => {
       cookieDomain: undefined,
     });
     const { app: otherApp } = buildPipelineApp((router) => {
-      router.get('/csrf', (_req, res) => {
-        res.json({ csrfToken: otherServer.issue(res) });
+      router.get('/csrf', (req, res) => {
+        res.json({ csrfToken: otherServer.issue(req, res) });
       });
     });
     const foreign = (await request(otherApp).get('/csrf')).body.csrfToken;
@@ -91,6 +91,20 @@ describe('CSRF protection (signed double submit)', () => {
         .set('X-CSRF-Token', token);
       expect(response.status).toBe(403);
     }
+  });
+
+  it('returns the token of an authentic cookie, so that every tab shares it', async () => {
+    const { token } = await issue();
+
+    const again = await request(app).get('/csrf').set('Cookie', `${CSRF_COOKIE}=${token}`);
+    const forged = await request(app)
+      .get('/csrf')
+      .set('Cookie', `${CSRF_COOKIE}=${'A'.repeat(43)}.${'B'.repeat(43)}`);
+
+    expect(again.body.csrfToken).toBe(token);
+    expect(again.headers['set-cookie']).toBeUndefined();
+    expect(forged.body.csrfToken).not.toContain('A'.repeat(43));
+    expect(String(forged.headers['set-cookie'])).toContain(forged.body.csrfToken);
   });
 
   it('lets a read-only request through without a token', async () => {

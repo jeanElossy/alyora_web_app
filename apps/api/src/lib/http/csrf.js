@@ -32,12 +32,19 @@ export function createCsrfProtection({ keyedHasher, cookieDomain }) {
 
   return {
     /**
-     * Délivre un nouveau jeton et le pose en cookie.
+     * Délivre le jeton du navigateur : celui de son cookie s'il est authentique, sinon un
+     * nouveau. Tous les onglets d'un navigateur partagent ainsi le même jeton : un onglet qui
+     * en demande un n'invalide pas celui des autres.
      *
+     * @param {import('express').Request} req
      * @param {import('express').Response} res
      * @returns {string}
      */
-    issue(res) {
+    issue(req, res) {
+      const existing = readCookie(req, CSRF_COOKIE);
+      if (existing && isAuthentic(existing)) {
+        return existing;
+      }
       const nonce = generateToken();
       const token = `${nonce}.${sign(nonce)}`;
       res.cookie(CSRF_COOKIE, token, csrfCookieOptions(cookieDomain));

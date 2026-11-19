@@ -75,8 +75,8 @@ export function createAuthController({ services, csrf, cookieDomain, logger }) {
     anonymous,
 
     /** @type {import('express').RequestHandler} */
-    csrfToken: (_req, res) => {
-      res.status(200).json({ csrfToken: csrf.issue(res) });
+    csrfToken: (req, res) => {
+      res.status(200).json({ csrfToken: csrf.issue(req, res) });
     },
 
     /** @type {import('express').RequestHandler} */
