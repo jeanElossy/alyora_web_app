@@ -105,7 +105,8 @@ sauf avec `VITE_ENABLE_DESIGN_SYSTEM=true` (tests de bout en bout). Les décisio
 
 Authentification (`/api/v1/auth`) : `csrf`, `register`, `verify-email`, `resend-verification`,
 `login`, `refresh`, `logout`, `logout-all`, `forgot-password`, `reset-password`, `me` (lecture et
-modification), `sessions` (liste) et `sessions/:sessionId` (révocation). Toute route qui modifie
+modification), `sessions` (liste), `sessions/:sessionId` (révocation), `2fa/setup`, `2fa/enable`,
+`2fa/disable`, `2fa/verify` (seconde étape de la connexion), `reauthenticate` et `password`. Toute route qui modifie
 l'état exige l'en-tête `X-CSRF-Token` (jeton de `GET /api/v1/auth/csrf`) ; l'inscription exige
 aussi `Idempotency-Key`. Les décisions (jetons, sessions, limites, verrouillage) sont dans
 [docs/decisions/0004-auth.md](./docs/decisions/0004-auth.md).
