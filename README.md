@@ -47,17 +47,17 @@ cp apps/web/.env.example apps/web/.env.local
 
 À lancer depuis la racine du dépôt.
 
-| Commande                                   | Effet                                                                                   |
-| ------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `pnpm lint`                                | ESLint, vérification Prettier et vérification JSDoc (`tsc`).                            |
-| `pnpm format`                              | Reformate tout le dépôt avec Prettier.                                                  |
-| `pnpm test`                                | Lance les tests Vitest de tous les paquets (API : couverture de `src/lib`, seuil 80 %). |
-| `pnpm -r build`                            | Build de tous les paquets qui en ont un (aujourd'hui : web, avec le rapport de budget). |
-| `pnpm --filter @alyora/api dev`            | Démarre l'API en mode watch.                                                            |
-| `pnpm --filter @alyora/worker dev`         | Démarre le worker en mode watch.                                                        |
-| `pnpm --filter @alyora/web dev`            | Démarre le serveur de développement Vite.                                               |
-| `pnpm --filter @alyora/web test:e2e`       | Tests de bout en bout Playwright, en 360 px, sur le build de production.                |
-| `pnpm --filter @alyora/api migrate:status` | État des migrations MongoDB (`migrate:up`, `migrate:down`, `migrate:create <nom>`).     |
+| Commande                                   | Effet                                                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`                                | ESLint, vérification Prettier et vérification JSDoc (`tsc`).                                               |
+| `pnpm format`                              | Reformate tout le dépôt avec Prettier.                                                                     |
+| `pnpm test`                                | Lance les tests Vitest de tous les paquets (API : couverture de `src/lib` et des `services/`, seuil 80 %). |
+| `pnpm -r build`                            | Build de tous les paquets qui en ont un (aujourd'hui : web, avec le rapport de budget).                    |
+| `pnpm --filter @alyora/api dev`            | Démarre l'API en mode watch.                                                                               |
+| `pnpm --filter @alyora/worker dev`         | Démarre le worker en mode watch.                                                                           |
+| `pnpm --filter @alyora/web dev`            | Démarre le serveur de développement Vite.                                                                  |
+| `pnpm --filter @alyora/web test:e2e`       | Tests de bout en bout Playwright, en 360 px, sur le build de production.                                   |
+| `pnpm --filter @alyora/api migrate:status` | État des migrations MongoDB (`migrate:up`, `migrate:down`, `migrate:create <nom>`).                        |
 
 Chaque paquet expose aussi ses propres scripts (`dev`, `start`, `test`, `typecheck`, `build`),
 utilisables avec `pnpm --filter <paquet> <script>`.
@@ -103,6 +103,13 @@ sauf avec `VITE_ENABLE_DESIGN_SYSTEM=true` (tests de bout en bout). Les décisio
 | `GET /api/v1/ping` | Le routeur v1 répond.                                                 |
 | `GET /api/v1/docs` | Document OpenAPI 3.1, généré depuis les schémas Zod. Hors production. |
 
+Authentification (`/api/v1/auth`) : `csrf`, `register`, `verify-email`, `resend-verification`,
+`login`, `refresh`, `logout`, `logout-all`, `forgot-password`, `reset-password`, `me` (lecture et
+modification), `sessions` (liste) et `sessions/:sessionId` (révocation). Toute route qui modifie
+l'état exige l'en-tête `X-CSRF-Token` (jeton de `GET /api/v1/auth/csrf`) ; l'inscription exige
+aussi `Idempotency-Key`. Les décisions (jetons, sessions, limites, verrouillage) sont dans
+[docs/decisions/0004-auth.md](./docs/decisions/0004-auth.md).
+
 Toute erreur suit le format `{ code, message, details }`, avec un code du catalogue de
 `packages/shared`. Chaque réponse porte un en-tête `X-Request-Id`, repris dans tous les logs
 de la requête. Les décisions du socle de l'API sont dans
@@ -118,8 +125,18 @@ docker run -d --name alyora-redis -p 6379:6379 redis:8
 ```
 
 puis, dans `apps/api/.env` : `NODE_ENV=development`,
-`MONGODB_URI=mongodb://localhost:27017/alyora?replicaSet=rs0&directConnection=true` et
-`REDIS_URL=redis://localhost:6379`.
+`MONGODB_URI=mongodb://localhost:27017/alyora?replicaSet=rs0&directConnection=true`,
+`REDIS_URL=redis://localhost:6379`, et les trois secrets `ACCESS_TOKEN_SECRET`, `HASH_SECRET` et
+`DATA_ENCRYPTION_KEY`, chacun généré par `openssl rand -base64 32` (trois valeurs différentes ;
+aucun n'a de valeur par défaut). Appliquer ensuite les migrations
+(`pnpm --filter @alyora/api migrate:up`).
+
+Les e-mails (vérification d'adresse, réinitialisation, alertes) passent par une file BullMQ,
+chiffrés : lancer aussi le worker (`pnpm --filter @alyora/worker dev`, avec dans
+`apps/worker/.env` les mêmes `REDIS_URL` et `DATA_ENCRYPTION_KEY`). En développement, il les
+écrit en JSON dans `apps/worker/.mail-outbox/` (ignoré par git) : le lien de vérification s'y
+trouve. Aucun prestataire d'envoi n'est encore choisi, et le worker refuse de démarrer en
+production tant qu'il ne l'est pas.
 
 ## Structure
 
@@ -164,21 +181,27 @@ annoncée au démarrage en développement et en test ; **à venir** : lue par un
 | `REDIS_URL`             | obligatoire | Connexion Redis (files BullMQ, rate limiting).      |
 | `CORS_ORIGINS`          | prod        | Origines navigateur autorisées (liste blanche).     |
 | `TRUST_PROXY`           | prod        | Nombre de proxys devant l'API, ou `false`.          |
-| `ACCESS_TOKEN_SECRET`   | à venir     | Secret de signature des access tokens.              |
-| `ACCESS_TOKEN_TTL`      | à venir     | Durée de vie d'un access token.                     |
-| `REFRESH_TOKEN_TTL`     | à venir     | Durée de vie d'un refresh token.                    |
-| `COOKIE_DOMAIN`         | à venir     | Domaine du cookie de refresh token.                 |
-| `WEB_APP_URL`           | à venir     | URL publique de l'application web (liens envoyés).  |
+| `ACCESS_TOKEN_SECRET`   | obligatoire | Secret de signature des access tokens (HS256).      |
+| `HASH_SECRET`           | obligatoire | Secret maître des empreintes à clé (IP, CSRF...).   |
+| `DATA_ENCRYPTION_KEY`   | obligatoire | Clé AES-256-GCM (secret 2FA, e-mails en file).      |
+| `WEB_APP_URL`           | prod        | Origine de l'application web (liens des e-mails).   |
+| `COOKIE_DOMAIN`         | facultatif  | Domaine parent des cookies (refresh token, CSRF).   |
+
+Les durées de vie des jetons (access token 15 minutes, refresh token 30 jours) sont des règles
+du projet, fixées dans `packages/shared`, et non des réglages.
 
 ### apps/worker
 
-| Variable             | Rôle                                          |
-| -------------------- | --------------------------------------------- |
-| `NODE_ENV`           | `development`, `test` ou `production`.        |
-| `LOG_LEVEL`          | Niveau de log Pino.                           |
-| `MONGODB_URI`        | Même base que l'API.                          |
-| `REDIS_URL`          | Même instance Redis que l'API.                |
-| `WORKER_CONCURRENCY` | Nombre de jobs traités en parallèle par file. |
+| Variable              | Rôle                                                                    |
+| --------------------- | ----------------------------------------------------------------------- |
+| `NODE_ENV`            | `development`, `test` ou `production`.                                  |
+| `LOG_LEVEL`           | Niveau de log Pino.                                                     |
+| `REDIS_URL`           | Même instance Redis que l'API.                                          |
+| `WORKER_CONCURRENCY`  | Nombre de jobs traités en parallèle par file.                           |
+| `DATA_ENCRYPTION_KEY` | La même que l'API : déchiffre les e-mails de la file.                   |
+| `EMAIL_TRANSPORT`     | `file` seulement (développement) : refusé en production pour l'instant. |
+| `MAIL_OUTBOX_DIR`     | Dossier des e-mails du transport `file`.                                |
+| `MONGODB_URI`         | À venir : même base que l'API.                                          |
 
 ### apps/web
 

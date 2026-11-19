@@ -123,13 +123,16 @@ normaliser ses erreurs et se tester, avant toute ressource métier.
   exactement 10 requêtes. Vérifié : un stockage qui lit puis écrit en laisse passer davantage.
 - Un faux client Redis reste utilisé pour les sondes, et un stockage en mémoire pour les tests
   de limite qui ne portent pas sur Redis.
-- Couverture v8 sur `src/lib`, seuil de 80 % (lignes, instructions, fonctions, branches) :
-  en dessous, `pnpm test` échoue.
+- Couverture v8 sur `src/lib` et, depuis M0.4, sur les `services/` des modules, seuil de 80 %
+  (lignes, instructions, fonctions, branches) : en dessous, `pnpm test` échoue.
 
 ### Exceptions à la règle « toute requête porte eventId ou organizationId »
 
 Ces opérations sont techniques et transverses par nature : commandes `hello` et `ping`,
-collections `migrations_changelog` et `migrations_lock`, nettoyage des bases de test.
+collections `migrations_changelog` et `migrations_lock`, nettoyage des bases de test. Les
+collections de plateforme de l'authentification (`users`, `sessions`, `refresh_tokens`,
+`verification_tokens`, `idempotency_keys`) sont listées dans
+[l'ADR 0004](./0004-auth.md).
 
 ## Conséquences
 
