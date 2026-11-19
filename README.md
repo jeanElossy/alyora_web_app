@@ -85,6 +85,11 @@ Quatre espaces, chacun dans son propre bundle, chargé à la première visite :
 | `/accueil`      | Accueil des invités le jour J   | Session, sinon `/accueil/connexion`      |
 | `/admin`        | Administration de la plateforme | Session, sinon `/admin/connexion`        |
 
+Pages du compte : `/inscription`, `/verifier-email`, `/mot-de-passe-oublie` et
+`/reinitialiser-mot-de-passe` (adresses des liens d'e-mail) ; dans chaque espace protégé,
+`/<espace>/connexion`, `/<espace>/profil` et `/<espace>/securite`. Elles forment un seul bundle
+(`auth-pages`), chargé à la demande.
+
 `pnpm --filter @alyora/web build` affiche le poids de chaque espace et échoue si le bundle
 initial de l'espace public dépasse 180 Ko compressés.
 
