@@ -48,7 +48,12 @@ export function FormSection() {
     if (simulateError) {
       throw simulatedValidationError();
     }
-    toast({ title: t('form.success'), description: t('form.successDescription'), tone: 'success' });
+    toast({
+      ns: NAMESPACE,
+      title: 'form.success',
+      description: 'form.successDescription',
+      tone: 'success',
+    });
     form.reset(DEFAULT_VALUES);
   }
 

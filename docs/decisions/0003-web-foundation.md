@@ -23,8 +23,10 @@ initial de l'espace public est limité à 180 Ko compressés.
   bien que Vite produit un bundle par espace.
 - Les espaces protégés passent par une garde, qui est un loader : elle s'exécute avant le
   rendu, et un espace protégé ne s'affiche jamais sans session, même brièvement. Sans access
-  token en mémoire, elle tente un refresh silencieux (rechargement de page) ; en cas d'échec,
-  elle redirige vers `/<espace>/connexion?retour=<page demandée>`.
+  token en mémoire, elle tente un refresh silencieux (rechargement de page). Si l'API le
+  refuse, elle redirige vers `/<espace>/connexion?retour=<page demandée>`. Une panne passagère
+  (réseau, erreur du serveur) ne dit rien de la session : la page d'erreur de l'espace
+  s'affiche, avec « Réessayer », sans renvoyer vers la connexion.
 - La garde n'est qu'un confort d'interface : le serveur vérifie chaque permission. Le bundle
   d'un espace protégé reste téléchargeable par tous et ne contient aucun secret.
 - Chaque espace a sa mise en page, sa navigation et sa page 404. Un visiteur sans session qui
@@ -44,9 +46,16 @@ initial de l'espace public est limité à 180 Ko compressés.
   `packages/shared/src/errors` (`CLIENT_ERROR_CODES`), séparés du catalogue de l'API.
 - Sur un 401, un seul refresh est lancé, quel que soit le nombre de requêtes en vol : elles
   attendent toutes la même promesse, puis chacune est rejouée une fois, sans boucle. Une
-  requête qui part pendant un refresh attend sa fin. Un 401 qui arrive après qu'un autre appel
-  a déjà renouvelé la session est rejoué avec le nouveau jeton, sans second refresh.
-- Un refresh refusé par l'API met fin à la session ; une panne réseau, non.
+  requête qui part pendant un refresh attend sa fin. Un 401 qui arrive après la fin d'un
+  refresh n'en relance pas un autre : rejoué avec le nouveau jeton si le refresh a réussi, il
+  échoue comme lui sinon. Chaque requête retient pour cela le nombre de refresh terminés au
+  moment de son envoi (correction de la clôture de M0.3 : un 401 tardif relançait un refresh).
+- Seul un refus définitif du refresh met fin à la session, une seule fois quel que soit le
+  nombre de requêtes en attente : une réponse 4xx de l'API, sauf 408 et 429
+  (`isDefinitiveRejection`). Une panne passagère la garde : requête qui n'aboutit pas, 5xx,
+  réponse d'un proxy, 408, 429, réponse illisible avec un statut de succès. La requête échoue
+  alors avec l'erreur du refresh, que TanStack Query réessaie si c'est une panne réseau ou une
+  5xx.
 - **Contrat provisoire** : `POST /api/v1/auth/refresh`, refresh token dans un cookie HttpOnly,
   réponse `{ accessToken }` (`refreshSessionResponseSchema`, dans `packages/shared`). Le module
   d'authentification le confirmera ou le fera évoluer.
@@ -147,7 +156,10 @@ Contrastes WCAG calculés (AA : 4,5:1 pour le texte courant, 3:1 pour un contour
   collections.
 - Notifications : la file (`toast-store.js`, Zustand) est dans le bundle initial, leur
   affichage Radix n'est chargé qu'à la première notification. Monté d'office, il ajoutait
-  13 Ko et faisait dépasser le budget (180,2 Ko).
+  13 Ko et faisait dépasser le budget (180,2 Ko). Une notification survit au rendu qui l'a
+  créée : `toast()` reçoit donc des clés de traduction et leur espace de noms, traduites à
+  l'affichage, pour qu'une notification ouverte suive un changement de langue. C'est la seule
+  exception à la règle « les textes arrivent traduits ».
 - Infobulle : Radix la ferme quand la page défile, y compris quand le focus clavier fait
   défiler jusqu'au déclencheur. Une infobulle ne porte donc jamais seule une information
   indispensable.
@@ -162,6 +174,8 @@ Contrastes WCAG calculés (AA : 4,5:1 pour le texte courant, 3:1 pour un contour
   Une erreur VALIDATION_ERROR de l'API s'affiche sous chaque champ concerné, le premier reçoit
   le focus une fois le formulaire réactivé ; toute erreur s'affiche aussi en tête du
   formulaire, traduite depuis son code. Une erreur inattendue donne le message générique.
+  Les erreurs de l'API sont enregistrées sous forme de clés de traduction et traduites à
+  l'affichage : elles suivent un changement de langue, comme celles du schéma.
 - Le schéma de la démonstration (`designSystemDemoFormSchema`) est dans `packages/shared`,
   marqué comme démonstration sans valeur métier.
 
@@ -180,8 +194,9 @@ Contrastes WCAG calculés (AA : 4,5:1 pour le texte courant, 3:1 pour un contour
   qui doit être refusé), page d'erreur, composants du design system (clavier, rôles, noms
   accessibles), formulaires.
 - Playwright, en 360 px, sur le build de production : mise en page et navigation de chaque
-  espace, absence de défilement horizontal, redirection sans session, refresh silencieux, 404
-  par espace, bundles chargés à la demande, lien d'évitement au clavier. Sur la page
+  espace, absence de défilement horizontal, redirection sans session, page d'erreur (et non
+  de connexion) quand l'API est injoignable, refresh silencieux, 404 par espace, bundles
+  chargés à la demande, lien d'évitement au clavier. Sur la page
   /design-system : les 19 composants visibles, la page entière parcourue au clavier avec un
   focus visible à chaque arrêt, fenêtre et panneau (focus piégé, Échap, focus rendu), liste,
   onglets, infobulle, notification, formulaire (erreurs, envoi, erreur de l'API), appel à

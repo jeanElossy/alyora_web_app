@@ -95,6 +95,21 @@ describe.each([
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
+  it('shows its error page, not the login page, when the session cannot be checked', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch');
+      }),
+    );
+    const { router } = renderAt(`/${segment}`);
+
+    expect(await findTitle(t('errorPage.title'))).toBeTruthy();
+    expect(screen.getByText(t('errors.NETWORK_ERROR'))).toBeTruthy();
+    expect(router.state.location.pathname).toBe(`/${segment}`);
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
   it('shows its own layout and navigation to a visitor with a session', async () => {
     useSessionStore.getState().setAccessToken('access-token');
     renderAt(`/${segment}`);

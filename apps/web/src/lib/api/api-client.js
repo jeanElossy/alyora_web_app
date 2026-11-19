@@ -1,6 +1,12 @@
 import { refreshSessionResponseSchema } from '@alyora/shared';
 import { useSessionStore } from '../session/session-store.js';
-import { ApiError, invalidResponseError, networkError, readJson, toApiError } from './api-error.js';
+import {
+  invalidResponseError,
+  isDefinitiveRejection,
+  networkError,
+  readJson,
+  toApiError,
+} from './api-error.js';
 import { createSingleFlight } from './refresh-queue.js';
 
 /** Route de rafraîchissement de session (contrat provisoire, voir session.schema.js). */
@@ -24,7 +30,8 @@ export const DEFAULT_API_BASE_URL = '/api/v1';
  * @property {typeof fetch} [fetchImpl]
  * @property {() => string | null} getAccessToken
  * @property {(accessToken: string) => void} setAccessToken
- * @property {() => void} onSessionExpired Appelée quand le refresh est refusé par l'API.
+ * @property {() => void} onSessionExpired Appelée une fois par refresh que l'API refuse
+ *   définitivement (voir isDefinitiveRejection).
  */
 
 /**
@@ -33,7 +40,11 @@ export const DEFAULT_API_BASE_URL = '/api/v1';
  * - toute erreur devient une ApiError typée (voir api-error.js) ;
  * - sur un 401, un seul refresh est lancé, quel que soit le nombre de requêtes en vol : les
  *   autres l'attendent, puis chacune est rejouée une fois. Une requête qui part pendant un
- *   refresh attend sa fin avant d'être envoyée.
+ *   refresh attend sa fin avant d'être envoyée. Un 401 qui arrive après la fin d'un refresh
+ *   n'en relance pas un autre : le résultat de ce refresh vaut pour lui ;
+ * - seul un refus définitif du refresh met fin à la session. Une panne passagère (réseau,
+ *   erreur du serveur, 429) la garde : la requête échoue avec l'erreur du refresh, que
+ *   l'appelant peut réessayer.
  *
  * @param {ApiClientDependencies} deps
  */
@@ -76,7 +87,8 @@ export function createApiClient({
     }
   }
 
-  const refreshSession = createSingleFlight(async () => {
+  /** @returns {Promise<string>} Le nouvel access token. */
+  async function requestAccessToken() {
     const response = await send(urlFor(REFRESH_PATH), {
       method: 'POST',
       headers: { Accept: 'application/json' },
@@ -88,8 +100,33 @@ export function createApiClient({
     if (!parsed.success) {
       throw invalidResponseError(response);
     }
-    setAccessToken(parsed.data.accessToken);
     return parsed.data.accessToken;
+  }
+
+  /**
+   * Nombre de refresh terminés, réussis ou non : une requête sait ainsi si l'un d'eux s'est
+   * terminé pendant qu'elle était en vol.
+   */
+  let completedRefreshes = 0;
+  /** Erreur du dernier refresh terminé, null s'il a réussi. @type {unknown} */
+  let lastRefreshError = null;
+
+  const refreshSession = createSingleFlight(async () => {
+    try {
+      const accessToken = await requestAccessToken();
+      lastRefreshError = null;
+      setAccessToken(accessToken);
+      return accessToken;
+    } catch (error) {
+      lastRefreshError = error;
+      // Ici, et pas dans chaque requête qui attendait : la session prend fin une seule fois.
+      if (isDefinitiveRejection(error)) {
+        onSessionExpired();
+      }
+      throw error;
+    } finally {
+      completedRefreshes += 1;
+    }
   });
 
   /**
@@ -115,28 +152,43 @@ export function createApiClient({
   }
 
   /**
-   * Obtient un jeton valide après un 401 reçu avec `rejectedToken`. Si un autre appel a déjà
-   * renouvelé la session entre-temps, son jeton sert tel quel : pas de second refresh.
+   * État de la session au moment où une requête part.
    *
-   * @param {string | null} rejectedToken
+   * @typedef {object} SentWith
+   * @property {string | null} accessToken Jeton envoyé.
+   * @property {number} completedRefreshes Refresh terminés à ce moment-là.
+   */
+
+  /**
+   * Obtient un jeton valide après un 401 :
+   * - si un autre appel a déjà renouvelé la session entre-temps, son jeton sert tel quel ;
+   * - si un refresh s'est terminé pendant le vol de la requête sans laisser de jeton, son
+   *   échec vaut pour elle : pas de second refresh ;
+   * - sinon, un refresh est lancé, ou celui qui est en vol est rejoint.
+   * Après un refus définitif (ou une session fermée entre-temps), la requête échoue avec son
+   * propre 401 ; après une panne passagère, avec l'erreur du refresh.
+   *
+   * @param {SentWith} sent
    * @param {Response} rejectedResponse
    * @returns {Promise<string>}
    */
-  async function renewAfter(rejectedToken, rejectedResponse) {
+  async function renewAfter(sent, rejectedResponse) {
     const current = getAccessToken();
-    if (current && current !== rejectedToken) {
+    if (current && current !== sent.accessToken) {
       return current;
     }
-    try {
-      return await refreshSession();
-    } catch (refreshError) {
-      // Un refresh refusé par l'API met fin à la session ; une panne réseau, non.
-      if (refreshError instanceof ApiError && refreshError.status === 0) {
-        throw refreshError;
+    let failure = lastRefreshError;
+    if (completedRefreshes === sent.completedRefreshes) {
+      try {
+        return await refreshSession();
+      } catch (refreshError) {
+        failure = refreshError;
       }
-      onSessionExpired();
-      throw await toApiError(rejectedResponse);
     }
+    if (failure !== null && !isDefinitiveRejection(failure)) {
+      throw failure;
+    }
+    throw await toApiError(rejectedResponse);
   }
 
   /**
@@ -149,11 +201,12 @@ export function createApiClient({
    */
   async function request(path, options = {}) {
     await refreshSession.settled();
-    const accessToken = getAccessToken();
-    let response = await sendAuthenticated(path, options, accessToken);
+    /** @type {SentWith} */
+    const sent = { accessToken: getAccessToken(), completedRefreshes };
+    let response = await sendAuthenticated(path, options, sent.accessToken);
 
     if (response.status === 401) {
-      const renewedToken = await renewAfter(accessToken, response);
+      const renewedToken = await renewAfter(sent, response);
       response = await sendAuthenticated(path, options, renewedToken);
     }
 

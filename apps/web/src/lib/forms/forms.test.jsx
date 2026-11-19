@@ -207,6 +207,54 @@ describe('forms on a shared Zod schema', () => {
 
     await vi.waitFor(() => expect(errorOf(name)).toBe('form.errors.required'));
   });
+
+  it('translates the errors of the API again when the language changes', async () => {
+    const user = userEvent.setup();
+    render(
+      <DemoForm
+        onSubmit={async () => {
+          throw new ApiError({
+            code: 'VALIDATION_ERROR',
+            status: 400,
+            message: 'Invalid request body',
+            details: { issues: [{ path: 'email', code: 'invalid_format', message: 'Invalid' }] },
+          });
+        }}
+      />,
+    );
+    await fillValidAnswer(user);
+    await user.click(screen.getByRole('button', { name: 'Envoyer' }));
+    const alert = await screen.findByRole('alert');
+
+    await act(async () => {
+      await i18next.changeLanguage(KEYS_LANGUAGE);
+    });
+
+    expect(alert.textContent).toBe('form.submitFailederrors.VALIDATION_ERROR');
+    expect(errorOf(screen.getByRole('textbox', { name: /Adresse e-mail/ }))).toBe(
+      'form.errors.invalid_format',
+    );
+  });
+
+  it('translates the generic message again when the language changes', async () => {
+    const user = userEvent.setup();
+    render(
+      <DemoForm
+        onSubmit={async () => {
+          throw new TypeError('Cannot read properties of undefined');
+        }}
+      />,
+    );
+    await fillValidAnswer(user);
+    await user.click(screen.getByRole('button', { name: 'Envoyer' }));
+    const alert = await screen.findByRole('alert');
+
+    await act(async () => {
+      await i18next.changeLanguage(KEYS_LANGUAGE);
+    });
+
+    expect(alert.textContent).toBe('form.submitFailederrors.INTERNAL_ERROR');
+  });
 });
 
 describe('describeIssue', () => {

@@ -1,5 +1,6 @@
 import { redirect } from 'react-router';
 import { apiClient } from '../api/api-client.js';
+import { isDefinitiveRejection } from '../api/api-error.js';
 import { useSessionStore } from './session-store.js';
 
 /** Paramètre de la page de connexion qui porte la page demandée au départ. */
@@ -14,7 +15,7 @@ export const RETURN_PARAM = 'retour';
  *
  * @param {object} deps
  * @param {() => string | null} deps.getAccessToken
- * @param {() => Promise<unknown>} deps.refreshSession
+ * @param {() => Promise<unknown>} deps.refreshSession Rejette une ApiError en cas d'échec.
  * @returns {(loginPath: string) => import('react-router').LoaderFunction}
  */
 export function createSessionGuard({ getAccessToken, refreshSession }) {
@@ -28,7 +29,13 @@ export function createSessionGuard({ getAccessToken, refreshSession }) {
         // rétablit la session sans repasser par la connexion.
         await refreshSession();
         return null;
-      } catch {
+      } catch (error) {
+        // Une panne passagère (réseau, serveur) ne dit rien de la session : elle remonte à la
+        // page d'erreur de l'espace, qui propose de réessayer. Seul un refus de l'API renvoie
+        // vers la connexion.
+        if (!isDefinitiveRejection(error)) {
+          throw error;
+        }
         const { pathname, search } = new URL(request.url);
         const params = new URLSearchParams({ [RETURN_PARAM]: `${pathname}${search}` });
         throw redirect(`${loginPath}?${params}`);

@@ -77,7 +77,7 @@ describe('silent session refresh on 401 (race)', () => {
     );
 
     expect(server.state.refreshCalls).toBe(1);
-    expect(session.expired).toBe(3);
+    expect(session.expired).toBe(1);
     expect(session.token).toBeNull();
     for (const outcome of outcomes) {
       expect(outcome).toMatchObject({
@@ -113,12 +113,127 @@ describe('silent session refresh on 401 (race)', () => {
     expect(server.state.refreshCalls).toBe(1);
   });
 
-  it('refuses a refresh response that is not in the expected format', async () => {
+  it('refuses a refresh response that is not in the expected format, without ending the session', async () => {
     const server = createServer({ refresh: () => jsonResponse(200, { token: 'x' }) });
-    const { client } = createClient(server);
+    const { client, session } = createClient(server);
 
     const error = await client.request('/items').catch((e) => e);
 
-    expect(error).toMatchObject({ code: 'UNAUTHENTICATED' });
+    expect(error).toMatchObject({ code: 'INVALID_RESPONSE', status: 200 });
+    expect(session.expired).toBe(0);
+  });
+});
+
+describe('silent session refresh: 401s that arrive after a refresh ended (race)', () => {
+  /** Les requêtes vers /slow répondent après la fin du refresh lancé par /fast. */
+  const latencyMs = (/** @type {string} */ url) => (url.endsWith('/slow') ? 60 : 0);
+
+  it('does not refresh again after the API refused the refresh, and ends the session once', async () => {
+    const server = createServer({ refresh: unauthenticated, refreshDelayMs: 5, latencyMs });
+    const { client, session } = createClient(server);
+
+    const outcomes = await Promise.allSettled([
+      client.request('/fast'),
+      client.request('/slow'),
+      client.request('/slow'),
+    ]);
+
+    expect(server.state.refreshCalls).toBe(1);
+    expect(session.expired).toBe(1);
+    for (const outcome of outcomes) {
+      expect(outcome).toMatchObject({ status: 'rejected', reason: { code: 'UNAUTHENTICATED' } });
+    }
+  });
+
+  it('does not refresh again after a refresh failed because of the network', async () => {
+    const server = createServer({
+      refresh: () => {
+        throw new TypeError('Failed to fetch');
+      },
+      refreshDelayMs: 5,
+      latencyMs,
+    });
+    const { client, session } = createClient(server);
+
+    const outcomes = await Promise.allSettled([client.request('/fast'), client.request('/slow')]);
+
+    expect(server.state.refreshCalls).toBe(1);
+    expect(session.expired).toBe(0);
+    for (const outcome of outcomes) {
+      expect(outcome).toMatchObject({ status: 'rejected', reason: { code: 'NETWORK_ERROR' } });
+    }
+  });
+
+  it('replays with the renewed token a 401 that arrives after a successful refresh', async () => {
+    const server = createServer({ refreshDelayMs: 5, latencyMs });
+    const { client } = createClient(server);
+
+    const results = await Promise.all([client.request('/fast'), client.request('/slow')]);
+
+    expect(server.state.refreshCalls).toBe(1);
+    expect(results).toEqual([{ url: `${BASE}/fast` }, { url: `${BASE}/slow` }]);
+  });
+
+  it('refreshes again for a request sent after a failed refresh', async () => {
+    let networkDown = true;
+    const server = createServer({
+      refresh: () => {
+        if (networkDown) {
+          throw new TypeError('Failed to fetch');
+        }
+        return jsonResponse(200, { accessToken: 'fresh-token' });
+      },
+      refreshDelayMs: 5,
+    });
+    const { client } = createClient(server);
+
+    await expect(client.request('/items')).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+    networkDown = false;
+
+    await expect(client.request('/items')).resolves.toEqual({ url: `${BASE}/items` });
+    expect(server.state.refreshCalls).toBe(2);
+  });
+});
+
+describe('silent session refresh: what ends the session', () => {
+  it.each([
+    ['a server error', 500, 'INTERNAL_ERROR'],
+    ['an unavailable service', 503, 'SERVICE_UNAVAILABLE'],
+    ['a rate limit', 429, 'RATE_LIMITED'],
+  ])('keeps the session after %s, and fails with it', async (_case, status, code) => {
+    const server = createServer({
+      refresh: () => jsonResponse(status, { code, message: 'x', details: {} }),
+    });
+    const { client, session } = createClient(server);
+
+    const error = await client.request('/items').catch((e) => e);
+
+    expect(error).toMatchObject({ code, status });
+    expect(session.expired).toBe(0);
+    expect(session.token).toBe('expired-token');
+  });
+
+  it('keeps the session when a proxy answers instead of the API', async () => {
+    const server = createServer({
+      refresh: () => new Response('<html>Bad Gateway</html>', { status: 502 }),
+    });
+    const { client, session } = createClient(server);
+
+    const error = await client.request('/items').catch((e) => e);
+
+    expect(error).toMatchObject({ code: 'INVALID_RESPONSE', status: 502 });
+    expect(session.expired).toBe(0);
+  });
+
+  it('ends the session when the API forbids the refresh', async () => {
+    const server = createServer({
+      refresh: () => jsonResponse(403, { code: 'FORBIDDEN', message: 'x', details: {} }),
+    });
+    const { client, session } = createClient(server);
+
+    const error = await client.request('/items').catch((e) => e);
+
+    expect(error).toMatchObject({ code: 'UNAUTHENTICATED', status: 401 });
+    expect(session.expired).toBe(1);
   });
 });

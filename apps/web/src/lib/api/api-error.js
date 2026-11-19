@@ -43,6 +43,27 @@ export function isApiError(error) {
   return error instanceof ApiError;
 }
 
+/** Statuts 4xx passagers : la même requête peut aboutir un peu plus tard. */
+const TRANSIENT_CLIENT_STATUSES = new Set([408, 429]);
+
+/**
+ * Vrai si l'API a répondu par un refus définitif (4xx, sauf 408 et 429) : renvoyer la même
+ * requête n'y changera rien. Faux pour une panne passagère : requête qui n'a pas abouti
+ * (statut 0), erreur du serveur ou d'un proxy (5xx), délai dépassé (408), trop de requêtes
+ * (429), réponse illisible avec un statut de succès, ou erreur qui ne vient pas de l'API.
+ *
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+export function isDefinitiveRejection(error) {
+  return (
+    isApiError(error) &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    !TRANSIENT_CLIENT_STATUSES.has(error.status)
+  );
+}
+
 /**
  * Traduit une réponse d'erreur de l'API. Un corps au format { code, message, details } devient
  * une ApiError de ce code ; tout autre corps (page HTML d'un proxy, JSON inattendu, rien)
