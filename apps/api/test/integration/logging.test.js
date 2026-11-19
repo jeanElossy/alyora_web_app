@@ -151,3 +151,34 @@ describe('a password sent in a request body', () => {
     expect(logs.text()).not.toContain('awa@example.ci');
   });
 });
+
+describe('payment details sent in a request body', () => {
+  const MSISDN = '2250707123456';
+  const WALLET = 'WAVE-0505987654';
+  const OTP = '918273';
+
+  it('are not logged when the handler logs the whole body, nor when an error message quotes them', async () => {
+    const { app, logs } = buildPipelineApp((pipelineApp, logger) => {
+      pipelineApp.post('/contributions', (req) => {
+        logger.info({ body: req.body }, 'Contribution received');
+        throw new Error(`Provider refused payer ${MSISDN} with code ${OTP}`);
+      });
+    });
+
+    const response = await request(app)
+      .post('/contributions')
+      .send({
+        amount: { amount: 25000, currency: 'XOF' },
+        payer: { partyIdType: 'MSISDN', partyId: MSISDN },
+        payment: { msisdn: MSISDN, walletNumber: WALLET, otp: OTP },
+      });
+
+    expect(response.status).toBe(500);
+    expect(logs.text()).toContain('Contribution received');
+    expect(logs.text()).toContain('25000');
+    for (const value of [MSISDN, WALLET, OTP]) {
+      expect(logs.text()).not.toContain(value);
+      expect(JSON.stringify(response.body)).not.toContain(value);
+    }
+  });
+});

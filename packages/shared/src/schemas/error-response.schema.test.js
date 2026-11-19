@@ -13,28 +13,40 @@ describe('errorResponseSchema', () => {
     expect(errorResponseSchema.parse(payload)).toEqual(payload);
   });
 
-  it('accepts a payload without details', () => {
-    const payload = { code: ERROR_CODES.NOT_FOUND, message: 'Resource not found' };
+  it('accepts empty details, for an error that has none', () => {
+    const payload = { code: ERROR_CODES.NOT_FOUND, message: 'Resource not found', details: {} };
 
     expect(errorResponseSchema.parse(payload)).toEqual(payload);
   });
 
+  it('rejects a payload without details: the three keys are always present', () => {
+    const result = errorResponseSchema.safeParse({
+      code: ERROR_CODES.NOT_FOUND,
+      message: 'Resource not found',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('rejects a code that is not part of ERROR_CODES', () => {
-    const result = errorResponseSchema.safeParse({ code: 'TEAPOT', message: 'Nope' });
+    const result = errorResponseSchema.safeParse({ code: 'TEAPOT', message: 'Nope', details: {} });
 
     expect(result.success).toBe(false);
   });
 
   it('rejects a missing code', () => {
-    const result = errorResponseSchema.safeParse({ message: 'No code' });
+    const result = errorResponseSchema.safeParse({ message: 'No code', details: {} });
 
     expect(result.success).toBe(false);
   });
 
   it('rejects a missing or empty message', () => {
-    expect(errorResponseSchema.safeParse({ code: ERROR_CODES.FORBIDDEN }).success).toBe(false);
     expect(
-      errorResponseSchema.safeParse({ code: ERROR_CODES.FORBIDDEN, message: '' }).success,
+      errorResponseSchema.safeParse({ code: ERROR_CODES.FORBIDDEN, details: {} }).success,
+    ).toBe(false);
+    expect(
+      errorResponseSchema.safeParse({ code: ERROR_CODES.FORBIDDEN, message: '', details: {} })
+        .success,
     ).toBe(false);
   });
 
@@ -42,6 +54,7 @@ describe('errorResponseSchema', () => {
     const result = errorResponseSchema.safeParse({
       code: ERROR_CODES.INTERNAL_ERROR,
       message: 'Unexpected error',
+      details: {},
       stack: 'Error: leaked stack trace',
     });
 

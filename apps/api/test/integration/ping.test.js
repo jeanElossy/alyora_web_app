@@ -1,4 +1,4 @@
-import { pingResponseSchema } from '@alyora/shared';
+import { errorResponseSchema, pingResponseSchema } from '@alyora/shared';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { buildTestApp } from '../helpers/app.js';
@@ -41,6 +41,10 @@ describe('GET /api/v1/ping', () => {
 
     expect(post.status).toBe(404);
     expect(unknown.status).toBe(404);
-    expect(unknown.body).toEqual({ code: 'NOT_FOUND', message: 'Route not found' });
+    expect(errorResponseSchema.parse(unknown.body)).toEqual({
+      code: 'NOT_FOUND',
+      message: 'Route not found',
+      details: {},
+    });
   });
 });

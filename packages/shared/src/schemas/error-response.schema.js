@@ -20,12 +20,13 @@ export const errorDetailsSchema = z.strictObject({
 });
 
 /**
- * Format normalisé des erreurs de l'API : { code, message, details }.
+ * Format normalisé des erreurs de l'API : { code, message, details }. Les trois clés sont
+ * toujours présentes ; `details` vaut {} quand l'erreur n'a pas de détails.
  */
 export const errorResponseSchema = z.strictObject({
   code: z.enum(ERROR_CODES),
   message: z.string().min(1),
-  details: errorDetailsSchema.optional(),
+  details: errorDetailsSchema,
 });
 
 /** @typedef {z.infer<typeof errorIssueSchema>} ErrorIssue */

@@ -51,8 +51,16 @@ normaliser ses erreurs et se tester, avant toute ressource métier.
   string, ni corps. Les sondes `/health` et `/ready` ne sont pas journalisées.
 - **Masquage, appliqué au dernier moment** (hook `streamWrite` de Pino, sur chaque ligne
   sérialisée), en deux couches :
-  1. par nom de champ, à toute profondeur : authorization, cookie, password, secret, token,
-     phone, email, card, cvv, iban (motif insensible à la casse, sur une partie du nom) ;
+  1. par nom de champ, à toute profondeur (`isSensitiveKey`, dans `src/lib/logger/redact.js`).
+     Le nom est découpé en mots (camelCase, snake_case, kebab-case) et mis en minuscules.
+     - Termes cherchés n'importe où dans le nom : authorization, cookie, password, passwd,
+       motdepasse, secret, token, credential, signature, apikey, privatekey, accesskey, email,
+       phone, mobile, whatsapp, msisdn, partyid (numéro du payeur chez MTN MoMo), wallet,
+       accountnumber, iban, card, cvv.
+     - Termes courts reconnus en mot entier seulement : pin, otp, cvc, pan, tel, note, notes.
+       Sinon « mapping » contiendrait « pin », « footprint » « otp » et « company » « pan ».
+       Un faux positif masque seulement une valeur (« discard » contient « card »), un faux
+       négatif la laisse fuir ;
   2. par valeur : les valeurs que le client a envoyées sous un de ces noms (corps, query,
      `Authorization`, cookies) sont effacées de tout texte de la ligne, message d'erreur
      compris. Les valeurs de moins de 6 caractères ne sont masquées que par nom.
@@ -67,8 +75,9 @@ normaliser ses erreurs et se tester, avant toute ressource métier.
 - Catalogue des codes et de leur statut HTTP dans `packages/shared/src/errors`.
 - `AppError(code, { message, details, cause })` pour les erreurs attendues. Toute autre
   erreur devient un `INTERNAL_ERROR` générique ; l'original n'est que dans les logs.
-- Réponse toujours `{ code, message, details }`. `details` est strict :
-  `{ issues?: [{ path, code, message }] }`, sans les valeurs reçues. **Aucune pile dans les
+- Réponse toujours `{ code, message, details }`, les trois clés présentes : `details` vaut
+  `{}` quand l'erreur n'a pas de détails, si bien que le client lit toujours un objet.
+  `details` est strict : `{ issues?: [{ path, code, message }] }`, sans les valeurs reçues. **Aucune pile dans les
   réponses, quel que soit l'environnement** : la pile se retrouve dans les logs grâce à
   `X-Request-Id`.
 - `message` est en anglais, pour les développeurs. Le front traduit le `code` avec i18next.
@@ -105,8 +114,15 @@ normaliser ses erreurs et se tester, avant toute ressource métier.
 
 - Vitest, Supertest, et un replica set mongodb-memory-server (MongoDB 8.0.37, la version du cluster Atlas) démarré une
   fois par exécution. Chaque worker de test a sa propre base, vidée avant chaque test.
-- Redis n'est pas nécessaire : un faux client sert aux sondes, un stockage en mémoire aux
-  tests de limite. Un vrai Redis deviendra nécessaire avec BullMQ.
+- Un vrai Redis (image Docker `redis:8`, port aléatoire de 127.0.0.1, sans persistance) est
+  démarré une fois par exécution par le setup global, puis supprimé. Les tests y isolent leurs
+  clés par un préfixe unique. `REDIS_TEST_URL` désigne un Redis existant à la place : les
+  tests y écrivent des clés `rl:test-*`, qui expirent en une minute.
+- Le rate limit adossé à Redis a des tests de course : 50 requêtes simultanées pour une limite
+  de 10, sur une instance puis sur deux instances qui partagent Redis, laissent passer
+  exactement 10 requêtes. Vérifié : un stockage qui lit puis écrit en laisse passer davantage.
+- Un faux client Redis reste utilisé pour les sondes, et un stockage en mémoire pour les tests
+  de limite qui ne portent pas sur Redis.
 - Couverture v8 sur `src/lib`, seuil de 80 % (lignes, instructions, fonctions, branches) :
   en dessous, `pnpm test` échoue.
 

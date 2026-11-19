@@ -53,6 +53,7 @@ describe('errorHandler', () => {
     expect(errorResponseSchema.parse(response.body)).toEqual({
       code: 'INTERNAL_ERROR',
       message: 'Internal server error',
+      details: {},
     });
     const errorLog = logs.entries().find((entry) => entry.msg === 'Request failed');
     expect(errorLog).toMatchObject({
@@ -86,6 +87,7 @@ describe('errorHandler', () => {
     expect(response.body).toEqual({
       code: 'FORBIDDEN',
       message: 'Not a collaborator of this event',
+      details: {},
     });
     expect(logs.entries().find((entry) => entry.code === 'FORBIDDEN')).toMatchObject({
       level: 'warn',
@@ -101,7 +103,11 @@ describe('errorHandler', () => {
       .send('{"email":"awa@example.ci","password": S3cretPass}');
 
     expect(response.status).toBe(400);
-    expect(response.body).toEqual({ code: 'VALIDATION_ERROR', message: 'Malformed JSON body' });
+    expect(response.body).toEqual({
+      code: 'VALIDATION_ERROR',
+      message: 'Malformed JSON body',
+      details: {},
+    });
     expect(logs.entries().find((entry) => entry.bodyErrorType)).toMatchObject({
       bodyErrorType: 'entity.parse.failed',
     });
@@ -160,7 +166,7 @@ describe('toAppError', () => {
 });
 
 describe('toErrorBody', () => {
-  it('includes details only when there are some', () => {
+  it('always includes details, empty when the error has none', () => {
     const details = {
       issues: [{ path: 'email', code: 'invalid_format', message: 'Invalid email' }],
     };
@@ -168,6 +174,7 @@ describe('toErrorBody', () => {
     expect(toErrorBody(new AppError('NOT_FOUND'))).toEqual({
       code: 'NOT_FOUND',
       message: 'Resource not found',
+      details: {},
     });
     expect(toErrorBody(new AppError('VALIDATION_ERROR', { details }))).toEqual({
       code: 'VALIDATION_ERROR',

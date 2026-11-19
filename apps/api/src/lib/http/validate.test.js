@@ -105,7 +105,11 @@ describe('validate', () => {
     const response = await request(app).get('/unvalidated');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ code: 'INTERNAL_ERROR', message: 'Internal server error' });
+    expect(response.body).toEqual({
+      code: 'INTERNAL_ERROR',
+      message: 'Internal server error',
+      details: {},
+    });
   });
 });
 

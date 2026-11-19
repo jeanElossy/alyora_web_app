@@ -63,7 +63,11 @@ utilisables avec `pnpm --filter <paquet> <script>`.
 
 Les tests de l'API démarrent un replica set MongoDB en mémoire (mongodb-memory-server). Le
 premier `pnpm test` télécharge le binaire MongoDB (environ 120 Mo) dans
-`~/.cache/mongodb-binaries`. Ils n'ont besoin ni de MongoDB ni de Redis installés.
+`~/.cache/mongodb-binaries`. Ils démarrent aussi un vrai Redis dans un conteneur Docker
+jetable (image `redis:8`), supprimé à la fin. Ils n'ont donc besoin ni de MongoDB ni de Redis
+installés, mais **Docker est requis**. Pour utiliser un Redis existant à la place, définir
+`REDIS_TEST_URL` (les tests y écrivent des clés `rl:test-*`, qui expirent en une minute). Un arrêt brutal des tests peut laisser un
+conteneur : `docker rm -f $(docker ps -q --filter label=alyora-test=redis)` le supprime.
 
 ## API
 

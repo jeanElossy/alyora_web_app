@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { SENSITIVE_KEY_PATTERN } from './redact.js';
+import { isSensitiveKey } from './redact.js';
 
 /**
  * Les valeurs plus courtes ne sont pas effacées par valeur (elles effaceraient du texte sans
@@ -81,7 +81,7 @@ function collect(value, sensitive, found, depth) {
   }
   if (typeof value === 'object') {
     for (const [key, item] of Object.entries(value)) {
-      collect(item, sensitive || SENSITIVE_KEY_PATTERN.test(key), found, depth + 1);
+      collect(item, sensitive || isSensitiveKey(key), found, depth + 1);
     }
   }
 }
