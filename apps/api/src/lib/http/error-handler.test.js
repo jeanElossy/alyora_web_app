@@ -17,6 +17,7 @@ function buildApp({ production = false } = {}) {
         CORS_ORIGINS: 'https://app.alyora.example',
         TRUST_PROXY: '1',
         MONGODB_MAX_POOL_SIZE: '10',
+        WEB_APP_URL: 'https://app.alyora.example',
       })
     : createTestConfig();
   return buildPipelineApp(

@@ -1,8 +1,10 @@
 import { createApp } from './app.js';
 import { ConfigError, loadConfig } from './config/load-config.js';
+import { createSecretBox } from './lib/crypto/secret-box.js';
 import { connectMongo, disconnectMongo, pingMongo } from './lib/db/mongo.js';
 import { createRedisStore } from './lib/http/rate-limit.js';
 import { createLogger } from './lib/logger/create-logger.js';
+import { createMailQueue, createQueueMailer } from './lib/mail/mail-queue.js';
 import { closeGracefully, installProcessHandlers } from './lib/process/lifecycle.js';
 import { closeRedis, connectRedis, createRedisClient, pingRedis } from './lib/redis/redis.js';
 
@@ -73,12 +75,20 @@ export async function startServer({
     const redis = createRedisClient({ url: config.redis.url, logger });
     resources.push({ name: 'redis', close: () => closeRedis(redis) });
     await connectRedis(redis);
+    // Producteur seulement : il partage le client Redis de l'API. Fermé avant lui.
+    const mailQueue = createMailQueue(redis);
+    resources.unshift({ name: 'mail-queue', close: () => mailQueue.close() });
 
     const app = createApp({
       config,
       logger,
       readinessChecks: { mongo: () => pingMongo(connection), redis: () => pingRedis(redis) },
       rateLimitStore: createRedisStore(redis, 'global'),
+      createRateLimitStore: (name) => createRedisStore(redis, name),
+      mailer: createQueueMailer({
+        queue: mailQueue,
+        secretBox: createSecretBox(config.auth.dataEncryptionKey),
+      }),
     });
     server = await listen(app, config.port);
     logger.info({ port: config.port }, 'API listening');

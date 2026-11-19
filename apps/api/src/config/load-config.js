@@ -10,6 +10,20 @@ import { ENV_KEYS, NON_PRODUCTION_DEFAULTS, envSchema } from './env.schema.js';
  * @property {{ url: string }} redis
  * @property {{ origins: string[] }} cors
  * @property {number | false} trustProxy
+ * @property {AuthConfig} auth
+ */
+
+/**
+ * Secrets et réglages de l'authentification. Cet objet n'est jamais journalisé.
+ *
+ * @typedef {object} AuthConfig
+ * @property {string} accessTokenSecret Signature des access tokens (HS256).
+ * @property {string} hashSecret Secret maître des empreintes à clé (IP, clés de rate limit,
+ *   CSRF, idempotence), chacune avec sa propre clé dérivée.
+ * @property {Buffer} dataEncryptionKey Clé AES-256-GCM des données chiffrées au repos.
+ * @property {string} webAppUrl Origine de l'application web, pour les liens des e-mails.
+ * @property {string | undefined} cookieDomain Domaine parent des cookies, absent : cookie
+ *   limité à l'hôte de l'API.
  */
 
 /**
@@ -53,6 +67,12 @@ export function loadConfig(env) {
   }
 
   const values = result.data;
+  if (values.ACCESS_TOKEN_SECRET === values.HASH_SECRET) {
+    // Un secret par usage : la fuite de l'un ne doit pas compromettre l'autre.
+    throw new ConfigError([
+      { variable: 'HASH_SECRET', message: 'must differ from ACCESS_TOKEN_SECRET' },
+    ]);
+  }
   return {
     config: {
       env: values.NODE_ENV,
@@ -63,6 +83,13 @@ export function loadConfig(env) {
       redis: { url: values.REDIS_URL },
       cors: { origins: values.CORS_ORIGINS },
       trustProxy: values.TRUST_PROXY,
+      auth: {
+        accessTokenSecret: values.ACCESS_TOKEN_SECRET,
+        hashSecret: values.HASH_SECRET,
+        dataEncryptionKey: values.DATA_ENCRYPTION_KEY,
+        webAppUrl: values.WEB_APP_URL,
+        cookieDomain: values.COOKIE_DOMAIN,
+      },
     },
     defaultsApplied,
   };

@@ -43,15 +43,27 @@ export function createRedisStore(redis, name) {
  * @param {boolean} options.failOpen Quand le stockage est injoignable : true laisse passer la
  *   requête (et journalise l'erreur), false répond par une erreur. Les limites sensibles
  *   bloquent.
+ * @param {(req: import('express').Request) => string} [options.keyGenerator] Clé du compteur.
+ *   Par défaut : l'IP cliente (regroupée par sous-réseau /56 en IPv6). Une clé qui contient une
+ *   donnée personnelle (adresse e-mail) doit en être une empreinte à clé, jamais la valeur.
  * @returns {import('express').RequestHandler}
  */
-export function createRateLimiter({ name, windowMs, limit, store, logger, failOpen }) {
+export function createRateLimiter({
+  name,
+  windowMs,
+  limit,
+  store,
+  logger,
+  failOpen,
+  keyGenerator,
+}) {
   return rateLimit({
     windowMs,
     limit,
     identifier: name,
     store,
     logger,
+    ...(keyGenerator ? { keyGenerator } : {}),
     passOnStoreError: failOpen,
     standardHeaders: 'draft-8',
     legacyHeaders: false,

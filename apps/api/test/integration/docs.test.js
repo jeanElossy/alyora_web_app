@@ -9,6 +9,7 @@ const PRODUCTION = {
   CORS_ORIGINS: 'https://app.alyora.example',
   TRUST_PROXY: '1',
   MONGODB_MAX_POOL_SIZE: '10',
+  WEB_APP_URL: 'https://app.alyora.example',
 };
 
 describe('GET /api/v1/docs', () => {
@@ -29,7 +30,12 @@ describe('GET /api/v1/docs', () => {
 
     const response = await request(app).get('/api/v1/docs');
 
-    expect(Object.keys(response.body.paths)).toEqual(['/api/v1/ping']);
+    const paths = Object.keys(response.body.paths);
+    expect(paths).toContain('/api/v1/ping');
+    expect(paths).toContain('/api/v1/auth/login');
+    expect(paths).toContain('/api/v1/auth/sessions/{sessionId}');
+    expect(paths.every((path) => path.startsWith('/api/v1/'))).toBe(true);
+    expect(paths).not.toContain('/api/v1/docs');
   });
 
   it('does not exist in production (forbidden access)', async () => {

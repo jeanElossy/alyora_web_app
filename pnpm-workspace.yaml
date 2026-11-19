@@ -12,6 +12,12 @@ allowBuilds:
   # Refusé explicitement : son postinstall télécharge un binaire MongoDB. Le binaire est
   # téléchargé au premier lancement des tests à la place (et mis en cache en CI).
   mongodb-memory-server: false
+  # Refusé : argon2 embarque ses binaires précompilés (N-API, donc valables pour toute version
+  # de Node) dans prebuilds/ ; son script ne ferait que les chercher, ou compiler en leur absence.
+  argon2: false
+  # Refusé : accélération native facultative du format msgpack de BullMQ. Ses binaires arrivent
+  # par des paquets de plateforme optionnels ; sans eux, msgpackr reste en JavaScript pur.
+  msgpackr-extract: false
 
 # Paquets remontés dans node_modules/.pnpm/node_modules (par défaut pour pnpm : tous).
 # punycode est exclu : ESLint l'installe (ajv -> uri-js) et, une fois remonté, il masque le

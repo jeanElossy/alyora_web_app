@@ -9,3 +9,6 @@ export {
 } from './lib/context/request-context.js';
 export { AppError, isAppError } from './lib/errors/app-error.js';
 export { createLogger } from './lib/logger/create-logger.js';
+export { DecryptionError, createSecretBox } from './lib/crypto/secret-box.js';
+export { MAIL_JOB_NAME, MAIL_QUEUE_NAME, mailMessageSchema } from './lib/mail/mail-queue.js';
+export { createFileTransport, createMailProcessor } from './lib/mail/mail-processor.js';

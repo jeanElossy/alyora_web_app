@@ -29,7 +29,10 @@ export function buildOpenApiDocument({ title, version, basePath, routes }) {
     openapi: '3.1.0',
     info: { title, version },
     paths,
-    components: { schemas: { ErrorResponse: toJsonSchema(errorResponseSchema, 'output') } },
+    components: {
+      schemas: { ErrorResponse: toJsonSchema(errorResponseSchema, 'output') },
+      securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
+    },
   };
 }
 
@@ -52,6 +55,9 @@ function toOperation(route) {
   const operation = { summary: route.summary, responses: toResponses(route) };
   if (route.tags) {
     operation.tags = route.tags;
+  }
+  if (route.authenticated) {
+    operation.security = [{ bearerAuth: [] }];
   }
   const parameters = [
     ...toParameters(route.request?.params, 'path'),

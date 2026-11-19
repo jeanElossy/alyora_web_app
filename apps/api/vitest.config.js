@@ -10,7 +10,8 @@ export default defineConfig({
     hookTimeout: 120_000,
     coverage: {
       provider: 'v8',
-      include: ['src/lib/**/*.js'],
+      // src/lib : le socle ; services/ : l'objectif de 80 % fixé par CLAUDE.md.
+      include: ['src/lib/**/*.js', 'src/modules/**/services/**/*.js'],
       exclude: ['**/*.test.js'],
       reporter: ['text', 'text-summary'],
       thresholds: { lines: 80, statements: 80, functions: 80, branches: 80 },

@@ -26,3 +26,6 @@ logs/
 # Rapports de Playwright
 playwright-report/
 test-results/
+
+# E-mails du transport « file » du worker (développement) : ils contiennent des jetons
+.mail-outbox/
