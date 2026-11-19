@@ -38,6 +38,6 @@ describe('GET /api/v1/docs', () => {
     const response = await request(app).get('/api/v1/docs');
 
     expect(response.status).toBe(404);
-    expect(response.body).toEqual({ code: 'NOT_FOUND', message: 'Route not found' });
+    expect(response.body).toEqual({ code: 'NOT_FOUND', message: 'Route not found', details: {} });
   });
 });

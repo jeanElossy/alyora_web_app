@@ -50,6 +50,7 @@ describe('createRateLimiter', () => {
     expect(errorResponseSchema.parse(third.body)).toEqual({
       code: 'RATE_LIMITED',
       message: 'Too many requests',
+      details: {},
     });
     expect(third.headers['retry-after']).toBeDefined();
   });

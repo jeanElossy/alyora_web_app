@@ -64,13 +64,14 @@ export function errorHandler({ logger }) {
 }
 
 /**
+ * Corps de la réponse d'erreur. `details` est toujours présent, vide quand l'erreur n'en a
+ * pas : le client lit toujours un objet.
+ *
  * @param {AppError} appError
  * @returns {import('@alyora/shared/schemas').ErrorResponse}
  */
 export function toErrorBody(appError) {
-  return appError.details === undefined
-    ? { code: appError.code, message: appError.message }
-    : { code: appError.code, message: appError.message, details: appError.details };
+  return { code: appError.code, message: appError.message, details: appError.details ?? {} };
 }
 
 /**

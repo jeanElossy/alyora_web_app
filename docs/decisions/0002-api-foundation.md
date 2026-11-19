@@ -75,8 +75,9 @@ normaliser ses erreurs et se tester, avant toute ressource métier.
 - Catalogue des codes et de leur statut HTTP dans `packages/shared/src/errors`.
 - `AppError(code, { message, details, cause })` pour les erreurs attendues. Toute autre
   erreur devient un `INTERNAL_ERROR` générique ; l'original n'est que dans les logs.
-- Réponse toujours `{ code, message, details }`. `details` est strict :
-  `{ issues?: [{ path, code, message }] }`, sans les valeurs reçues. **Aucune pile dans les
+- Réponse toujours `{ code, message, details }`, les trois clés présentes : `details` vaut
+  `{}` quand l'erreur n'a pas de détails, si bien que le client lit toujours un objet.
+  `details` est strict : `{ issues?: [{ path, code, message }] }`, sans les valeurs reçues. **Aucune pile dans les
   réponses, quel que soit l'environnement** : la pile se retrouve dans les logs grâce à
   `X-Request-Id`.
 - `message` est en anglais, pour les développeurs. Le front traduit le `code` avec i18next.
