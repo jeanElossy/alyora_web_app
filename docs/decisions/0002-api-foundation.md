@@ -51,8 +51,16 @@ normaliser ses erreurs et se tester, avant toute ressource métier.
   string, ni corps. Les sondes `/health` et `/ready` ne sont pas journalisées.
 - **Masquage, appliqué au dernier moment** (hook `streamWrite` de Pino, sur chaque ligne
   sérialisée), en deux couches :
-  1. par nom de champ, à toute profondeur : authorization, cookie, password, secret, token,
-     phone, email, card, cvv, iban (motif insensible à la casse, sur une partie du nom) ;
+  1. par nom de champ, à toute profondeur (`isSensitiveKey`, dans `src/lib/logger/redact.js`).
+     Le nom est découpé en mots (camelCase, snake_case, kebab-case) et mis en minuscules.
+     - Termes cherchés n'importe où dans le nom : authorization, cookie, password, passwd,
+       motdepasse, secret, token, credential, signature, apikey, privatekey, accesskey, email,
+       phone, mobile, whatsapp, msisdn, partyid (numéro du payeur chez MTN MoMo), wallet,
+       accountnumber, iban, card, cvv.
+     - Termes courts reconnus en mot entier seulement : pin, otp, cvc, pan, tel, note, notes.
+       Sinon « mapping » contiendrait « pin », « footprint » « otp » et « company » « pan ».
+       Un faux positif masque seulement une valeur (« discard » contient « card »), un faux
+       négatif la laisse fuir ;
   2. par valeur : les valeurs que le client a envoyées sous un de ces noms (corps, query,
      `Authorization`, cookies) sont effacées de tout texte de la ligne, message d'erreur
      compris. Les valeurs de moins de 6 caractères ne sont masquées que par nom.

@@ -17,6 +17,8 @@ describe('collectRequestSecrets', () => {
         password: 'correct-horse',
         contact: { email: 'awa@example.ci', phones: ['+2250700000001', 2250700000002] },
         guests: [{ name: 'Yao', tokens: { invitation: 'tok_abcdef123456' } }],
+        payer: { partyIdType: 'MSISDN', partyId: '2250500000003' },
+        payment: { msisdn: '2250100000004', walletNumber: '0700000005', otp: '483920' },
       },
       query: { token: 'query-token-123', page: '2' },
       headers: {},
@@ -29,6 +31,13 @@ describe('collectRequestSecrets', () => {
         '+2250700000001',
         '2250700000002',
         'tok_abcdef123456',
+        // Faux positif assumé : "partyIdType" contient "partyid". Seul le mot "MSISDN" est
+        // alors effacé des lignes de la requête.
+        'MSISDN',
+        '2250500000003',
+        '2250100000004',
+        '0700000005',
+        '483920',
         'query-token-123',
       ].sort(),
     );

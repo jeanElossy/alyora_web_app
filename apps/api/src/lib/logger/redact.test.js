@@ -42,8 +42,59 @@ describe('redactSensitive', () => {
     'cardNumber',
     'cvv',
     'iban',
+    // Coordonnées de contact et de paiement (mobile money compris).
+    'msisdn',
+    'subscriberMSISDN',
+    'mobile',
+    'mobileNumber',
+    'whatsapp',
+    'whatsappNumber',
+    'telephone',
+    'tel',
+    'walletNumber',
+    'wallet_id',
+    'accountNumber',
+    'bank_account_number',
+    'partyId',
+    'cvc',
+    'pan',
+    // Codes et clés.
+    'otp',
+    'OTPCode',
+    'pin',
+    'pinCode',
+    'userPIN',
+    'apiKey',
+    'x-api-key',
+    'privateKey',
+    'accessKey',
+    'credentials',
+    'signature',
+    'motDePasse',
+    'mot_de_passe',
+    // Notes internes.
+    'note',
+    'notes',
+    'internalNote',
   ])('treats "%s" as sensitive', (key) => {
     expect(redactSensitive({ [key]: 'value' })).toEqual({ [key]: REDACTED });
+  });
+
+  it.each([
+    'eventId',
+    'guestCount',
+    'status',
+    'mapping',
+    'shipping',
+    'footprint',
+    'company',
+    'panel',
+    'hotel',
+    'notebook',
+    'keyboard',
+    'spinner',
+  ])('keeps "%s", which only contains a short sensitive word inside another word', (key) => {
+    expect(redactSensitive({ [key]: 'value' })).toEqual({ [key]: 'value' });
   });
 
   it('redacts a sensitive field whatever its value type, objects included', () => {

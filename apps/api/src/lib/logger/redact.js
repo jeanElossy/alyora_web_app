@@ -2,13 +2,93 @@
 export const REDACTED = '[REDACTED]';
 
 /**
- * Noms de champs considérés comme sensibles, reconnus sans tenir compte de la casse, n'importe
- * où dans le nom : "password", "newPassword", "accessToken", "refresh_token", "phoneNumber",
- * "Authorization", "set-cookie"... Un faux positif masque seulement une valeur, un faux
- * négatif la laisse fuir.
+ * Termes sensibles reconnus n'importe où dans le nom du champ, une fois celui-ci mis en
+ * minuscules et débarrassé de ses séparateurs : "newPassword", "refresh_token", "set-cookie",
+ * "subscriberMsisdn", "bank_account_number"... Un faux positif masque seulement une valeur
+ * ("discard" contient "card"), un faux négatif la laisse fuir.
  */
-export const SENSITIVE_KEY_PATTERN =
-  /authorization|cookie|passw(or)?d|secret|token|phone|e-?mail|card|cvv|iban/i;
+const SENSITIVE_SUBSTRINGS = Object.freeze([
+  'authorization',
+  'cookie',
+  'password',
+  'passwd',
+  'motdepasse',
+  'secret',
+  'token',
+  'credential',
+  'signature',
+  'apikey',
+  'privatekey',
+  'accesskey',
+  'email',
+  'phone',
+  'mobile',
+  'whatsapp',
+  'msisdn',
+  // MTN MoMo : le numéro du payeur est transmis dans "partyId".
+  'partyid',
+  'wallet',
+  'accountnumber',
+  'iban',
+  'card',
+  'cvv',
+]);
+
+/**
+ * Termes trop courts pour être cherchés dans tout le nom : ils ne comptent que s'ils forment
+ * un mot entier ("pinCode", "otp", "internal_note"), sinon "mapping" contiendrait "pin",
+ * "footprint" "otp" et "company" "pan".
+ */
+const SENSITIVE_WORDS = new Set(['pin', 'otp', 'cvc', 'pan', 'tel', 'note', 'notes']);
+
+/**
+ * Résultats déjà calculés : un logger revoit sans cesse les mêmes noms de champs.
+ *
+ * @type {Map<string, boolean>}
+ */
+const sensitivityByKey = new Map();
+const MAX_CACHED_KEYS = 1_000;
+
+/**
+ * Dit si un nom de champ désigne une donnée sensible (identifiant, secret, coordonnée de
+ * contact ou de paiement, note interne), quelle que soit sa casse et son style d'écriture
+ * (camelCase, snake_case, kebab-case).
+ *
+ * @param {string} key
+ * @returns {boolean}
+ */
+export function isSensitiveKey(key) {
+  const cached = sensitivityByKey.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const words = splitWords(key);
+  const compact = words.join('');
+  const sensitive =
+    words.some((word) => SENSITIVE_WORDS.has(word)) ||
+    SENSITIVE_SUBSTRINGS.some((term) => compact.includes(term));
+  if (sensitivityByKey.size >= MAX_CACHED_KEYS) {
+    sensitivityByKey.clear();
+  }
+  sensitivityByKey.set(key, sensitive);
+  return sensitive;
+}
+
+/**
+ * "subscriberMSISDN" -> ["subscriber", "msisdn"], "OTPCode" -> ["otp", "code"],
+ * "refresh_token" -> ["refresh", "token"].
+ *
+ * @param {string} key
+ * @returns {string[]}
+ */
+function splitWords(key) {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
 
 const MAX_DEPTH = 10;
 
@@ -100,9 +180,7 @@ function walk(value, depth, ancestors, secrets) {
     /** @type {Record<string, unknown>} */
     const record = {};
     for (const [key, item] of Object.entries(value)) {
-      record[key] = SENSITIVE_KEY_PATTERN.test(key)
-        ? REDACTED
-        : walk(item, depth + 1, ancestors, secrets);
+      record[key] = isSensitiveKey(key) ? REDACTED : walk(item, depth + 1, ancestors, secrets);
     }
     copy = record;
   }
