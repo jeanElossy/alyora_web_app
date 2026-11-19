@@ -113,8 +113,15 @@ normaliser ses erreurs et se tester, avant toute ressource métier.
 
 - Vitest, Supertest, et un replica set mongodb-memory-server (MongoDB 8.0.37, la version du cluster Atlas) démarré une
   fois par exécution. Chaque worker de test a sa propre base, vidée avant chaque test.
-- Redis n'est pas nécessaire : un faux client sert aux sondes, un stockage en mémoire aux
-  tests de limite. Un vrai Redis deviendra nécessaire avec BullMQ.
+- Un vrai Redis (image Docker `redis:8`, port aléatoire de 127.0.0.1, sans persistance) est
+  démarré une fois par exécution par le setup global, puis supprimé. Les tests y isolent leurs
+  clés par un préfixe unique. `REDIS_TEST_URL` désigne un Redis existant à la place : les
+  tests y écrivent des clés `rl:test-*`, qui expirent en une minute.
+- Le rate limit adossé à Redis a des tests de course : 50 requêtes simultanées pour une limite
+  de 10, sur une instance puis sur deux instances qui partagent Redis, laissent passer
+  exactement 10 requêtes. Vérifié : un stockage qui lit puis écrit en laisse passer davantage.
+- Un faux client Redis reste utilisé pour les sondes, et un stockage en mémoire pour les tests
+  de limite qui ne portent pas sur Redis.
 - Couverture v8 sur `src/lib`, seuil de 80 % (lignes, instructions, fonctions, branches) :
   en dessous, `pnpm test` échoue.
 

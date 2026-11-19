@@ -3,13 +3,7 @@ import { MemoryStore } from 'express-rate-limit';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { buildPipelineApp } from '../../../test/helpers/app.js';
-import { createFakeRedis } from '../../../test/helpers/fake-redis.js';
-import {
-  GLOBAL_RATE_LIMIT,
-  createRateLimiter,
-  createRedisStore,
-  globalRateLimiter,
-} from './rate-limit.js';
+import { GLOBAL_RATE_LIMIT, createRateLimiter, globalRateLimiter } from './rate-limit.js';
 
 /** Stockage dont le serveur est en panne. @returns {import('express-rate-limit').Store} */
 function brokenStore() {
@@ -96,21 +90,5 @@ describe('globalRateLimiter', () => {
   });
 });
 
-describe('createRedisStore', () => {
-  it('loads its atomic scripts, then increments through the Redis client under its prefix', async () => {
-    const redis = createFakeRedis();
-    const store = createRedisStore(redis, 'global');
-    const limiterOptions = /** @type {import('express-rate-limit').Options} */ (
-      /** @type {unknown} */ ({ windowMs: 60_000 })
-    );
-
-    await store.init?.(limiterOptions);
-    const result = await store.increment('203.0.113.7');
-
-    const commandNames = redis.commands.map(([command, subcommand]) => `${command} ${subcommand}`);
-    expect(commandNames.filter((name) => name === 'SCRIPT LOAD')).toHaveLength(2);
-    const increment = redis.commands.find(([command]) => command === 'EVALSHA');
-    expect(increment).toContain('rl:global:203.0.113.7');
-    expect(result.totalHits).toBe(1);
-  });
-});
+// createRedisStore est testé contre un vrai Redis, avec des requêtes concurrentes :
+// test/integration/rate-limit-race.test.js.
