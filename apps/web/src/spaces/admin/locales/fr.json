@@ -4,7 +4,9 @@
   },
   "nav": {
     "label": "Navigation de l’administration",
-    "home": "Vue d’ensemble"
+    "home": "Vue d’ensemble",
+    "profile": "Profil",
+    "security": "Sécurité"
   },
   "home": {
     "documentTitle": "Administration · ALYORA",
@@ -19,9 +21,8 @@
     "message": "Cette page n’existe pas dans l’administration.",
     "back": "Revenir à la vue d’ensemble"
   },
-  "login": {
-    "documentTitle": "Connexion · Administration",
-    "title": "Connexion à l’administration",
-    "message": "La connexion à l’administration sera bientôt disponible."
+  "account": {
+    "signOut": "Se déconnecter",
+    "signingOut": "Déconnexion…"
   }
 }

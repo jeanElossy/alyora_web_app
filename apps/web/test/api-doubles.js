@@ -19,9 +19,13 @@ export function jsonResponse(status, body, headers = {}) {
 export const unauthenticated = () =>
   jsonResponse(401, { code: 'UNAUTHENTICATED', message: 'Authentication required', details: {} });
 
+/** Jeton CSRF que délivre le faux serveur. */
+export const CSRF_TOKEN = 'csrf-nonce.csrf-signature';
+
 /**
- * Faux serveur : /auth/refresh répond avec `refresh()`, les autres routes acceptent seulement
- * le jeton courant du serveur. Les appels sont enregistrés.
+ * Faux serveur : /auth/csrf délivre CSRF_TOKEN ; /auth/refresh exige ce jeton puis répond avec
+ * `refresh()` ; les autres routes acceptent seulement l'access token courant du serveur. Les
+ * appels sont enregistrés.
  *
  * @param {object} [options]
  * @param {() => Promise<Response> | Response} [options.refresh]
@@ -29,11 +33,19 @@ export const unauthenticated = () =>
  * @param {(url: string) => number} [options.latencyMs] Délai de réponse des autres routes.
  */
 export function createServer({ refresh, refreshDelayMs = 20, latencyMs = () => 0 } = {}) {
-  const state = { validToken: 'fresh-token', refreshCalls: 0 };
+  const state = { validToken: 'fresh-token', refreshCalls: 0, csrfCalls: 0, csrfToken: CSRF_TOKEN };
   /** @type {Array<{ url: string, init: RequestInit }>} */
   const calls = [];
   const fetchImpl = vi.fn(async (/** @type {string} */ url, /** @type {RequestInit} */ init) => {
     calls.push({ url, init });
+    const headers = /** @type {Record<string, string>} */ (init.headers ?? {});
+    if (url.endsWith('/auth/csrf')) {
+      state.csrfCalls += 1;
+      return jsonResponse(200, { csrfToken: state.csrfToken });
+    }
+    if (url.endsWith('/auth/refresh') && headers['X-CSRF-Token'] !== state.csrfToken) {
+      return jsonResponse(403, { code: 'CSRF_INVALID', message: 'x', details: {} });
+    }
     if (url.endsWith('/auth/refresh')) {
       state.refreshCalls += 1;
       await new Promise((resolve) => setTimeout(resolve, refreshDelayMs));
@@ -43,7 +55,6 @@ export function createServer({ refresh, refreshDelayMs = 20, latencyMs = () => 0
     if (delay > 0) {
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
-    const headers = /** @type {Record<string, string>} */ (init.headers ?? {});
     if (headers.Authorization !== `Bearer ${state.validToken}`) {
       return unauthenticated();
     }

@@ -1,10 +1,10 @@
 // Bundle de l'espace d'administration : mise en page, pages et traductions, chargés à la première visite.
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
-import { LoginShell } from '../../app/LoginShell.jsx';
 import { PageMessage } from '../../app/PageMessage.jsx';
 import { SpaceHome } from '../../app/SpaceHome.jsx';
 import { SpaceShell } from '../../app/SpaceShell.jsx';
+import { SignOutButton } from '../../features/auth/components/SignOutButton.jsx';
 import { registerNamespace } from '../../lib/i18n/i18n.js';
 import fr from './locales/fr.json';
 
@@ -21,7 +21,18 @@ export function Layout() {
       homePath={HOME_PATH}
       spaceName={t('space.name')}
       navLabel={t('nav.label')}
-      navItems={[{ to: HOME_PATH, label: t('nav.home'), end: true }]}
+      navItems={[
+        { to: HOME_PATH, label: t('nav.home'), end: true },
+        { to: `${HOME_PATH}/profil`, label: t('nav.profile') },
+        { to: `${HOME_PATH}/securite`, label: t('nav.security') },
+      ]}
+      actions={
+        <SignOutButton
+          loginPath={`${HOME_PATH}/connexion`}
+          label={t('account.signOut')}
+          pendingLabel={t('account.signingOut')}
+        />
+      }
     >
       <Outlet />
     </SpaceShell>
@@ -53,20 +64,6 @@ export function NotFoundPage() {
       title={t('notFound.title')}
       message={t('notFound.message')}
       action={{ to: HOME_PATH, label: t('notFound.back') }}
-    />
-  );
-}
-
-/** Coquille de connexion, sans formulaire : le module d'authentification la remplacera. */
-export function LoginPage() {
-  const { t } = useTranslation(NAMESPACE);
-
-  return (
-    <LoginShell
-      documentTitle={t('login.documentTitle')}
-      spaceName={t('space.name')}
-      title={t('login.title')}
-      message={t('login.message')}
     />
   );
 }

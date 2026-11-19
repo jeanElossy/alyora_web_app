@@ -7,5 +7,6 @@ import { protectedSpaceRoutes } from '../../app/space-routes.js';
  */
 export const checkinRoutes = protectedSpaceRoutes({
   path: 'accueil',
+  space: 'checkin',
   importer: () => import('./checkin-space.jsx'),
 });

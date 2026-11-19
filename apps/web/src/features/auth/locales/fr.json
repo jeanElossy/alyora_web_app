@@ -1,0 +1,182 @@
+{
+  "layout": {
+    "tagline": "Chaque mariage mérite une organisation à sa hauteur.",
+    "promise": "Vos invités, leurs réponses et leur accueil, réunis en un seul lieu, en toute sécurité.",
+    "backHome": "Revenir à l’accueil d’ALYORA"
+  },
+  "spaces": {
+    "organizer": "Espace organisateur",
+    "checkin": "Accueil des invités",
+    "admin": "Administration"
+  },
+  "login": {
+    "documentTitle": "Connexion · {{space}} · ALYORA",
+    "titles": {
+      "organizer": "Connexion à l’espace organisateur",
+      "checkin": "Connexion à l’accueil des invités",
+      "admin": "Connexion à l’administration"
+    },
+    "intro": "Saisissez l’adresse e-mail et le mot de passe de votre compte ALYORA.",
+    "label": "Formulaire de connexion",
+    "submit": "Se connecter",
+    "forgot": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "register": "Créer un compte"
+  },
+  "twoFactorStep": {
+    "title": "Double authentification",
+    "intro": "Ouvrez votre application d’authentification et saisissez le code à 6 chiffres qu’elle affiche.",
+    "backupIntro": "Saisissez l’un de vos codes de secours. Chaque code ne sert qu’une fois.",
+    "label": "Code de double authentification",
+    "submit": "Valider",
+    "useBackup": "Utiliser un code de secours",
+    "useOtp": "Utiliser le code de l’application",
+    "restart": "Recommencer la connexion"
+  },
+  "fields": {
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "newPasswordHint": "Au moins {{minimum}} caractères. Une phrase facile à retenir fait un excellent mot de passe.",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "accountType": "Vous organisez",
+    "phone": "Téléphone",
+    "phoneHint": "Au format international, par exemple +225 07 00 00 00 00 sans espaces.",
+    "timezone": "Fuseau horaire",
+    "otp": "Code de l’application",
+    "otpHint": "Les 6 chiffres affichés par votre application d’authentification.",
+    "backupCode": "Code de secours",
+    "backupCodeHint": "Par exemple ABCDE-FGH23."
+  },
+  "accountTypes": {
+    "individual": "Votre propre mariage",
+    "professional": "Des mariages, en professionnel"
+  },
+  "password": {
+    "show": "Afficher",
+    "hide": "Masquer",
+    "backToLogin": "Revenir à la connexion"
+  },
+  "register": {
+    "documentTitle": "Créer un compte · ALYORA",
+    "eyebrow": "Inscription",
+    "title": "Créer votre compte",
+    "intro": "Quelques informations suffisent. Vous confirmerez ensuite votre adresse e-mail.",
+    "label": "Formulaire d’inscription",
+    "submit": "Créer mon compte",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "login": "Se connecter",
+    "sentTitle": "Vérifiez votre boîte de réception",
+    "sentText": "Nous avons envoyé un e-mail à {{email}}. Ouvrez le lien qu’il contient pour confirmer votre adresse.",
+    "sentHint": "Rien reçu après quelques minutes ? Regardez dans les courriers indésirables, ou demandez un nouveau lien depuis la page de vérification."
+  },
+  "verifyEmail": {
+    "documentTitle": "Vérification de l’adresse e-mail · ALYORA",
+    "eyebrow": "Adresse e-mail",
+    "checkingTitle": "Vérification en cours",
+    "checking": "Vérification de votre adresse…",
+    "verifiedTitle": "Adresse confirmée",
+    "verifiedText": "Merci : votre adresse e-mail est confirmée. Votre compte est prêt.",
+    "continue": "Accéder à mon espace",
+    "invalidTitle": "Ce lien n’est plus valable",
+    "invalidText": "Le lien a peut-être déjà servi, ou il a expiré : il est valable 24 heures. Demandez-en un nouveau.",
+    "missingTitle": "Confirmer votre adresse",
+    "missingText": "Ouvrez le lien reçu par e-mail, ou demandez-en un nouveau.",
+    "failedTitle": "La vérification n’a pas abouti",
+    "failedText": "Un problème est survenu. Réessayez dans quelques instants, ou demandez un nouveau lien.",
+    "resend": "Recevoir un nouveau lien",
+    "resendLabel": "Demande d’un nouveau lien",
+    "resent": "Si cette adresse attend une confirmation, un nouveau lien vient d’y être envoyé."
+  },
+  "forgot": {
+    "documentTitle": "Mot de passe oublié · ALYORA",
+    "eyebrow": "Mot de passe",
+    "title": "Mot de passe oublié",
+    "intro": "Indiquez l’adresse de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.",
+    "label": "Demande de réinitialisation",
+    "submit": "Recevoir le lien",
+    "sentTitle": "Regardez vos e-mails",
+    "sentText": "Si un compte existe avec cette adresse, un lien vient d’y être envoyé. Il est valable une heure et ne sert qu’une fois."
+  },
+  "reset": {
+    "documentTitle": "Nouveau mot de passe · ALYORA",
+    "eyebrow": "Mot de passe",
+    "title": "Choisir un nouveau mot de passe",
+    "intro": "Par sécurité, tous vos appareils seront déconnectés.",
+    "label": "Choix du nouveau mot de passe",
+    "submit": "Enregistrer le mot de passe",
+    "doneTitle": "Mot de passe modifié",
+    "doneText": "Votre nouveau mot de passe est enregistré. Connectez-vous pour continuer.",
+    "invalidTitle": "Ce lien n’est plus valable",
+    "invalidText": "Le lien a peut-être déjà servi, ou il a expiré : il est valable une heure.",
+    "askAgain": "Demander un nouveau lien"
+  },
+  "account": {
+    "eyebrow": "Mon compte",
+    "navLabel": "Rubriques du compte",
+    "profile": "Profil",
+    "security": "Sécurité"
+  },
+  "profile": {
+    "documentTitle": "Profil · ALYORA",
+    "title": "Profil",
+    "intro": "Les informations de votre compte, visibles de vous seul.",
+    "label": "Profil du compte",
+    "save": "Enregistrer",
+    "saved": "Profil enregistré",
+    "emailTitle": "Adresse e-mail",
+    "emailText": "L’adresse de connexion de votre compte.",
+    "emailVerified": "Adresse confirmée",
+    "emailPending": "En attente de confirmation"
+  },
+  "security": {
+    "documentTitle": "Sécurité · ALYORA",
+    "title": "Sécurité",
+    "intro": "Vos appareils connectés, la double authentification et votre mot de passe.",
+    "sessions": {
+      "title": "Appareils connectés",
+      "intro": "Déconnectez un appareil que vous ne reconnaissez pas : il ne pourra plus accéder à votre compte.",
+      "current": "Cet appareil",
+      "lastSeen": "Dernière activité : {{date}}",
+      "revoke": "Déconnecter",
+      "revoked": "Appareil déconnecté",
+      "logoutAll": "Déconnecter tous les appareils",
+      "unknownDevice": "Appareil non identifié"
+    },
+    "twoFactor": {
+      "title": "Double authentification",
+      "intro": "Chaque connexion demande en plus un code de votre téléphone : même votre mot de passe en main, personne ne peut entrer.",
+      "on": "Activée",
+      "off": "Désactivée",
+      "start": "Activer",
+      "scan": "Scannez ce code avec une application d’authentification (Google Authenticator, Microsoft Authenticator, Authy…), puis saisissez le code qu’elle affiche.",
+      "manual": "Saisie manuelle de la clé :",
+      "qrAlt": "QR code à scanner avec votre application d’authentification",
+      "enable": "Activer",
+      "enableLabel": "Activation de la double authentification",
+      "enabled": "Double authentification activée",
+      "codesTitle": "Vos codes de secours",
+      "codesText": "Notez-les et gardez-les en lieu sûr : chacun permet une connexion si vous perdez votre téléphone. Ils ne seront plus affichés.",
+      "codesDone": "J’ai noté mes codes",
+      "disable": "Désactiver",
+      "disableLabel": "Désactivation de la double authentification",
+      "disableCode": "Code de l’application ou code de secours",
+      "disableHint": "Pour confirmer, saisissez le code affiché par votre application, ou un code de secours.",
+      "confirmDisable": "Confirmer la désactivation",
+      "cancel": "Annuler",
+      "disabled": "Double authentification désactivée"
+    },
+    "password": {
+      "title": "Mot de passe",
+      "intro": "Vos autres appareils seront déconnectés ; celui-ci reste connecté.",
+      "submit": "Changer le mot de passe",
+      "changed": "Mot de passe modifié"
+    }
+  },
+  "reauth": {
+    "title": "Confirmer votre identité",
+    "intro": "Par sécurité, confirmez votre mot de passe avant de continuer.",
+    "submit": "Confirmer"
+  }
+}

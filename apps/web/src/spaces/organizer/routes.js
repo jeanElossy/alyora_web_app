@@ -7,5 +7,6 @@ import { protectedSpaceRoutes } from '../../app/space-routes.js';
  */
 export const organizerRoutes = protectedSpaceRoutes({
   path: 'organisateur',
+  space: 'organizer',
   importer: () => import('./organizer-space.jsx'),
 });

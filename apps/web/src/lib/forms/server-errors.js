@@ -13,6 +13,11 @@ const SERVER_ISSUE_KEYS = Object.freeze({
   invalid_format: 'invalid_format',
   invalid_type: 'invalid_type',
   invalid_value: 'invalid_value',
+  // Mot de passe refusé par l'API (liste des mots de passe courants, répétitions, éléments
+  // du compte), qu'elle seule peut vérifier.
+  password_too_common: 'password_too_common',
+  password_too_repetitive: 'password_too_repetitive',
+  password_contains_personal_info: 'password_contains_personal_info',
 });
 
 /**

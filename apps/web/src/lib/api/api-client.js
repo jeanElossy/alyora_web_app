@@ -1,5 +1,6 @@
-import { refreshSessionResponseSchema } from '@alyora/shared';
+import { CSRF_HEADER, csrfTokenResponseSchema, refreshSessionResponseSchema } from '@alyora/shared';
 import { useSessionStore } from '../session/session-store.js';
+import { resolveApiBaseUrl } from './api-base-url.js';
 import {
   invalidResponseError,
   isDefinitiveRejection,
@@ -7,13 +8,18 @@ import {
   readJson,
   toApiError,
 } from './api-error.js';
+import { withCrossTabLock } from './cross-tab-lock.js';
+import { createCsrfToken } from './csrf-token.js';
 import { createSingleFlight } from './refresh-queue.js';
 
-/** Route de rafraîchissement de session (contrat provisoire, voir session.schema.js). */
+/** Route de rafraîchissement de session. */
 export const REFRESH_PATH = '/auth/refresh';
 
-/** Base de l'API quand VITE_API_BASE_URL est absente : la même origine que l'application. */
-export const DEFAULT_API_BASE_URL = '/api/v1';
+/** Route qui délivre le jeton CSRF. */
+export const CSRF_PATH = '/auth/csrf';
+
+/** Verrou partagé par les onglets autour du refresh (voir cross-tab-lock.js). */
+export const REFRESH_LOCK = 'alyora-session-refresh';
 
 /**
  * @typedef {object} RequestOptions
@@ -32,6 +38,7 @@ export const DEFAULT_API_BASE_URL = '/api/v1';
  * @property {(accessToken: string) => void} setAccessToken
  * @property {() => void} onSessionExpired Appelée une fois par refresh que l'API refuse
  *   définitivement (voir isDefinitiveRejection).
+ * @property {import('./cross-tab-lock.js').LockManagerLike} [locks] Web Locks (tests).
  */
 
 /**
@@ -44,7 +51,14 @@ export const DEFAULT_API_BASE_URL = '/api/v1';
  *   n'en relance pas un autre : le résultat de ce refresh vaut pour lui ;
  * - seul un refus définitif du refresh met fin à la session. Une panne passagère (réseau,
  *   erreur du serveur, 429) la garde : la requête échoue avec l'erreur du refresh, que
- *   l'appelant peut réessayer.
+ *   l'appelant peut réessayer ;
+ * - seul un 401 UNAUTHENTICATED (access token absent ou expiré) déclenche un refresh. Des
+ *   identifiants faux, un code 2FA faux ou une réauthentification demandée sont la réponse
+ *   elle-même, renvoyée telle quelle ;
+ * - toute requête qui modifie l'état, refresh compris, porte le jeton CSRF ; refusé (cookie
+ *   expiré), il est redemandé une fois et la requête rejouée ;
+ * - le refresh se fait sous un verrou partagé par les onglets : deux onglets ne présentent
+ *   jamais ensemble le même refresh token (l'API y verrait un vol).
  *
  * @param {ApiClientDependencies} deps
  */
@@ -54,6 +68,7 @@ export function createApiClient({
   getAccessToken,
   setAccessToken,
   onSessionExpired,
+  locks,
 }) {
   /**
    * @param {string} path
@@ -87,12 +102,31 @@ export function createApiClient({
     }
   }
 
+  const csrf = createCsrfToken({
+    fetchToken: async () => {
+      const response = await send(urlFor(CSRF_PATH), {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        throw await toApiError(response);
+      }
+      const parsed = csrfTokenResponseSchema.safeParse(await readJson(response));
+      if (!parsed.success) {
+        throw invalidResponseError(response);
+      }
+      return parsed.data.csrfToken;
+    },
+  });
+
   /** @returns {Promise<string>} Le nouvel access token. */
   async function requestAccessToken() {
-    const response = await send(urlFor(REFRESH_PATH), {
-      method: 'POST',
-      headers: { Accept: 'application/json' },
-    });
+    const response = await csrf.sendWith((csrfToken) =>
+      send(urlFor(REFRESH_PATH), {
+        method: 'POST',
+        headers: { Accept: 'application/json', [CSRF_HEADER]: csrfToken },
+      }),
+    );
     if (!response.ok) {
       throw await toApiError(response);
     }
@@ -113,7 +147,7 @@ export function createApiClient({
 
   const refreshSession = createSingleFlight(async () => {
     try {
-      const accessToken = await requestAccessToken();
+      const accessToken = await withCrossTabLock(REFRESH_LOCK, requestAccessToken, locks);
       lastRefreshError = null;
       setAccessToken(accessToken);
       return accessToken;
@@ -133,8 +167,14 @@ export function createApiClient({
    * @param {string} path
    * @param {RequestOptions} options
    * @param {string | null} accessToken
+   * @param {string | null} csrfToken
    */
-  function sendAuthenticated(path, { method = 'GET', body, query, headers, signal }, accessToken) {
+  function sendAuthenticated(
+    path,
+    { method = 'GET', body, query, headers, signal },
+    accessToken,
+    csrfToken,
+  ) {
     /** @type {Record<string, string>} */
     const allHeaders = { Accept: 'application/json', ...headers };
     if (body !== undefined) {
@@ -142,6 +182,9 @@ export function createApiClient({
     }
     if (accessToken) {
       allHeaders.Authorization = `Bearer ${accessToken}`;
+    }
+    if (csrfToken) {
+      allHeaders[CSRF_HEADER] = csrfToken;
     }
     return send(urlFor(path, query), {
       method,
@@ -169,10 +212,10 @@ export function createApiClient({
    * propre 401 ; après une panne passagère, avec l'erreur du refresh.
    *
    * @param {SentWith} sent
-   * @param {Response} rejectedResponse
+   * @param {import('./api-error.js').ApiError} rejection Le 401 reçu.
    * @returns {Promise<string>}
    */
-  async function renewAfter(sent, rejectedResponse) {
+  async function renewAfter(sent, rejection) {
     const current = getAccessToken();
     if (current && current !== sent.accessToken) {
       return current;
@@ -188,7 +231,7 @@ export function createApiClient({
     if (failure !== null && !isDefinitiveRejection(failure)) {
       throw failure;
     }
-    throw await toApiError(rejectedResponse);
+    throw rejection;
   }
 
   /**
@@ -203,11 +246,19 @@ export function createApiClient({
     await refreshSession.settled();
     /** @type {SentWith} */
     const sent = { accessToken: getAccessToken(), completedRefreshes };
-    let response = await sendAuthenticated(path, options, sent.accessToken);
+    /** @param {string | null} accessToken */
+    const sendOnce = (accessToken) =>
+      (options.method ?? 'GET') === 'GET'
+        ? sendAuthenticated(path, options, accessToken, null)
+        : csrf.sendWith((csrfToken) => sendAuthenticated(path, options, accessToken, csrfToken));
+    let response = await sendOnce(sent.accessToken);
 
     if (response.status === 401) {
-      const renewedToken = await renewAfter(sent, response);
-      response = await sendAuthenticated(path, options, renewedToken);
+      const rejection = await toApiError(response);
+      if (rejection.code !== 'UNAUTHENTICATED') {
+        throw rejection;
+      }
+      response = await sendOnce(await renewAfter(sent, rejection));
     }
 
     if (!response.ok) {
@@ -228,29 +279,6 @@ export function createApiClient({
 
 /** @typedef {ReturnType<typeof createApiClient>} ApiClient */
 
-/**
- * Valide VITE_API_BASE_URL : une URL http(s) absolue ou un chemin absolu, sans barre finale.
- * Absente, l'API est cherchée sur la même origine (/api/v1).
- *
- * @param {string | undefined} value
- * @returns {string}
- * @throws {Error} Au démarrage, si la valeur est invalide.
- */
-export function resolveApiBaseUrl(value) {
-  const trimmed = value?.trim();
-  if (!trimmed) {
-    return DEFAULT_API_BASE_URL;
-  }
-  const isPath = trimmed.startsWith('/') && !trimmed.startsWith('//');
-  const isHttpUrl = /^https?:\/\/[^/\s]+(\/\S*)?$/.test(trimmed);
-  if ((!isPath && !isHttpUrl) || trimmed.endsWith('/')) {
-    throw new Error(
-      'VITE_API_BASE_URL must be an http(s) URL or an absolute path, without trailing slash',
-    );
-  }
-  return trimmed;
-}
-
 /** Client de l'application, branché sur la session en mémoire. */
 export const apiClient = createApiClient({
   baseUrl: resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL),
@@ -258,3 +286,5 @@ export const apiClient = createApiClient({
   setAccessToken: (accessToken) => useSessionStore.getState().setAccessToken(accessToken),
   onSessionExpired: () => useSessionStore.getState().clear(),
 });
+
+export { DEFAULT_API_BASE_URL, resolveApiBaseUrl } from './api-base-url.js';

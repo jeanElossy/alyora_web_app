@@ -7,6 +7,7 @@ import { publicRoutes } from '../spaces/public/routes.js';
 import { ErrorPage } from './ErrorPage.jsx';
 import { RootLayout } from './RootLayout.jsx';
 import { RouteLoading } from './RouteLoading.jsx';
+import { publicAccountRoutes } from './space-routes.js';
 
 /**
  * Arbre des routes. Il ne contient que la structure : le code de chaque espace (mises en
@@ -14,6 +15,8 @@ import { RouteLoading } from './RouteLoading.jsx';
  *
  * - `/` : public et invités ;
  * - `/organisateur`, `/accueil`, `/admin` : espaces protégés, chacun avec sa page de connexion ;
+ * - `/inscription`, `/verifier-email`, `/mot-de-passe-oublie`, `/reinitialiser-mot-de-passe` :
+ *   pages publiques du compte, aux adresses des liens envoyés par e-mail ;
  * - `/design-system` : démonstration des composants, hors production seulement.
  *
  * @type {import('react-router').RouteObject[]}
@@ -26,6 +29,7 @@ export const routes = [
     ErrorBoundary: ErrorPage,
     HydrateFallback: RouteLoading,
     children: [
+      ...publicAccountRoutes,
       publicRoutes,
       organizerRoutes,
       checkinRoutes,

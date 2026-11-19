@@ -1,9 +1,11 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import i18next from 'i18next';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_LANGUAGE, KEYS_LANGUAGE } from '../lib/i18n/i18n.js';
 import { useSessionStore } from '../lib/session/session-store.js';
+import { createQueryClient } from './query-client.js';
 import { routes } from './router.jsx';
 
 /** @param {string} key */
@@ -15,7 +17,11 @@ const TRANSLATION_KEY = /^[A-Za-z0-9_.:-]+$/;
 /** @param {string} path */
 function renderAt(path) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
-  const view = render(<RouterProvider router={router} />);
+  const view = render(
+    <QueryClientProvider client={createQueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
   return { router, ...view };
 }
 
@@ -30,6 +36,7 @@ beforeAll(async () => {
     import('../spaces/organizer/organizer-space.jsx'),
     import('../spaces/checkin/checkin-space.jsx'),
     import('../spaces/admin/admin-space.jsx'),
+    import('../features/auth/auth-pages.jsx'),
   ]);
 });
 
@@ -88,7 +95,7 @@ describe.each([
   it('redirects a visitor without session to its login page (forbidden access)', async () => {
     const { router } = renderAt(`/${segment}`);
 
-    expect(await findTitle(t(`${namespace}:login.title`))).toBeTruthy();
+    expect(await findTitle(t(`auth:login.titles.${namespace}`))).toBeTruthy();
     expect(router.state.location.pathname).toBe(`/${segment}/connexion`);
     expect(router.state.location.search).toBe(`?retour=%2F${segment}`);
     // Rien de l'espace protégé n'est affiché, pas même sa navigation.
@@ -145,7 +152,16 @@ describe('translations', () => {
 
     await screen.findByRole('heading', { level: 1 });
 
-    const words = (document.body.textContent ?? '').split(/\s+/).filter(Boolean);
+    // Ce que perçoit l'utilisateur : le texte, sans ce qui est masqué à tous (aria-hidden :
+    // décorations, comme l'astérisque d'un champ obligatoire).
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    /** @type {string[]} */
+    const words = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.parentElement?.closest('[aria-hidden="true"]')) {
+        words.push(...(node.textContent ?? '').split(/\s+/).filter(Boolean));
+      }
+    }
     expect(words.length).toBeGreaterThan(0);
     for (const word of words) {
       expect(word).toMatch(TRANSLATION_KEY);
