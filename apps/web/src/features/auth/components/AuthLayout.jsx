@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { BRAND } from '../../../assets/brand/index.js';
 import { PHOTOS } from '../../../assets/images/index.js';
 import { NAMESPACE } from '../namespace.js';
 
@@ -34,7 +35,7 @@ export function AuthLayout({ documentTitle, eyebrow, title, intro, children, foo
           height={PHOTOS.reception.height}
           alt=""
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full animate-drift object-cover"
         />
         {/* Voile vert : le texte garde son contraste quelle que soit la photo. */}
         <div
@@ -42,13 +43,17 @@ export function AuthLayout({ documentTitle, eyebrow, title, intro, children, foo
           className="absolute inset-0 bg-linear-to-b from-forest/90 via-forest/40 to-forest"
         />
         <div className="relative flex h-full flex-col justify-between p-12">
-          <Link
-            to="/"
-            className="w-fit font-display text-2xl font-semibold tracking-[0.22em] text-ivory"
-          >
-            {t('brand', { ns: 'common' })}
+          <Link to="/" className="w-fit animate-rise">
+            <img
+              src={BRAND.logoOnDark.src}
+              srcSet={BRAND.logoOnDark.srcSet}
+              width={BRAND.logoOnDark.width}
+              height={BRAND.logoOnDark.height}
+              alt={t('brand', { ns: 'common' })}
+              className="h-auto w-48"
+            />
           </Link>
-          <div className="max-w-md">
+          <div className="max-w-md animate-rise [animation-delay:200ms]">
             <span aria-hidden="true" className="block h-px w-12 bg-champagne" />
             <p className="mt-6 font-display text-3xl leading-snug text-champagne">
               {t('layout.tagline')}
@@ -59,13 +64,17 @@ export function AuthLayout({ documentTitle, eyebrow, title, intro, children, foo
       </aside>
       <div className="flex flex-col items-center justify-center px-5 py-10 sm:px-8 sm:py-16">
         <div className="w-full max-w-md">
-          <Link
-            to="/"
-            className="block font-display text-xl font-semibold tracking-[0.22em] text-forest lg:hidden"
-          >
-            {t('brand', { ns: 'common' })}
+          <Link to="/" className="mx-auto block w-fit animate-rise lg:hidden">
+            <img
+              src={BRAND.logo.src}
+              srcSet={BRAND.logo.srcSet}
+              width={BRAND.logo.width}
+              height={BRAND.logo.height}
+              alt={t('brand', { ns: 'common' })}
+              className="h-auto w-40"
+            />
           </Link>
-          <div className="mt-8 rounded-3xl border border-charcoal/10 bg-white p-6 shadow-[0_24px_60px_-30px_rgba(23,61,50,0.35)] sm:p-10 lg:mt-0">
+          <div className="mt-8 animate-rise rounded-3xl border border-charcoal/10 bg-white p-6 shadow-[0_24px_60px_-30px_rgba(23,61,50,0.35)] [animation-delay:120ms] sm:p-10 lg:mt-0">
             <p className="text-xs font-medium tracking-[0.24em] text-champagne-deep uppercase">
               {eyebrow}
             </p>

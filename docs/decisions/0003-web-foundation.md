@@ -127,6 +127,19 @@ Contrastes WCAG calculés (AA : 4,5:1 pour le texte courant, 3:1 pour un contour
   Garamond pour les titres, en 500 et 600 seulement. Le navigateur ne télécharge que les
   sous-ensembles de caractères dont la page a besoin.
 
+### Logo et mouvement
+
+- Logo fourni par le responsable du projet, détouré (fond ivoire rendu transparent, bords lissés
+  conservés) en trois versions, dans `src/assets/brand/` : couleur pour les fonds clairs, nom et
+  signature en ivoire pour les fonds sombres, emblème seul. WebP en deux densités. L'emblème
+  accompagne le nom dans l'en-tête et le pied de page des espaces (décoratif : le nom nomme le
+  lien) ; le logo complet ouvre les pages du compte. Favicons et icône Apple dans `public/`.
+- Mouvement en CSS seulement, sans bibliothèque : apparition douce des titres et des cartes
+  (`animate-rise`, décalée de 100 à 300 ms), zoom très lent des grandes photos (`animate-drift`),
+  sections révélées au défilement (`reveal-on-scroll`, animations liées au défilement là où le
+  navigateur les connaît, rien sinon), léger zoom des photos au survol. Tout est neutralisé pour
+  qui demande moins de mouvement.
+
 ### Budget
 
 - `pnpm build` lance `scripts/check-bundle-budget.js` : il lit le manifeste de Vite, affiche le

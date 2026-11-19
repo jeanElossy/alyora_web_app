@@ -19,7 +19,7 @@ import { CONTAINER } from './SpaceShell.jsx';
  */
 export function SpaceHome({ documentTitle, eyebrow, title, intro, emptyTitle, emptyMessage }) {
   return (
-    <div className={`${CONTAINER} py-12 sm:py-20`}>
+    <div className={`${CONTAINER} animate-rise py-12 sm:py-20`}>
       <title>{documentTitle}</title>
       <p className="text-xs font-medium tracking-[0.24em] text-champagne-deep uppercase">
         {eyebrow}

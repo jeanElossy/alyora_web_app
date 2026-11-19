@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink } from 'react-router';
+import { BRAND } from '../assets/brand/index.js';
 
 /** Largeur et marges du contenu, communes à l'en-tête, aux pages et au pied de page. */
 export const CONTAINER = 'mx-auto w-full max-w-6xl px-5 sm:px-8';
@@ -47,8 +48,18 @@ export function SpaceShell({ homePath, spaceName, navLabel, navItems, actions, c
         <div className={`${CONTAINER} flex flex-wrap items-center gap-x-10`}>
           <Link
             to={homePath}
-            className="py-4 font-display text-2xl font-semibold tracking-[0.22em] text-forest"
+            className="group flex items-center gap-3 py-3 font-display text-2xl font-semibold tracking-[0.22em] text-forest"
           >
+            {/* Emblème décoratif : le nom, juste après, nomme le lien. */}
+            <img
+              src={BRAND.emblem.src}
+              srcSet={BRAND.emblem.srcSet}
+              width={BRAND.emblem.width}
+              height={BRAND.emblem.height}
+              alt=""
+              decoding="async"
+              className="h-9 w-auto transition-transform duration-500 group-hover:-rotate-3 group-hover:scale-105"
+            />
             {t('brand')}
           </Link>
           {/* Masqué en 360 px : la page le reprend en surtitre, et l'en-tête reste sur deux lignes. */}
@@ -86,7 +97,16 @@ export function SpaceShell({ homePath, spaceName, navLabel, navItems, actions, c
         <div
           className={`${CONTAINER} flex flex-col gap-2 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between`}
         >
-          <span className="font-display text-lg font-semibold tracking-[0.22em] text-forest">
+          <span className="flex items-center gap-2 font-display text-lg font-semibold tracking-[0.22em] text-forest">
+            <img
+              src={BRAND.emblem.src}
+              srcSet={BRAND.emblem.srcSet}
+              width={BRAND.emblem.width}
+              height={BRAND.emblem.height}
+              alt=""
+              decoding="async"
+              className="h-7 w-auto"
+            />
             {t('brand')}
           </span>
           <span>{t('footer', { year: new Date().getFullYear() })}</span>

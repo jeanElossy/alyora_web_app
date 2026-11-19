@@ -38,6 +38,11 @@
   --animate-zoom-in: zoom-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
   --animate-slide-in-bottom: slide-in-bottom 260ms cubic-bezier(0.16, 1, 0.3, 1);
   --animate-slide-in-right: slide-in-right 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Apparition douce : un léger glissement vers le haut. « both » : invisible avant son départ
+     (délai d'un élément décalé), à sa place après. */
+  --animate-rise: rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Zoom très lent des grandes photos (dans un cadre qui les rogne). */
+  --animate-drift: drift 28s ease-in-out infinite alternate;
 
   @keyframes fade-in {
     from {
@@ -59,6 +64,18 @@
   @keyframes slide-in-right {
     from {
       transform: translateX(100%);
+    }
+  }
+  /* Propriétés translate et scale seules : elles se composent avec celles de Tailwind. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 14px;
+    }
+  }
+  @keyframes drift {
+    to {
+      scale: 1.07;
     }
   }
 }
@@ -116,5 +133,22 @@
 
   .surface-dark :focus-visible {
     outline-color: var(--color-champagne);
+  }
+}
+
+/*
+ * Apparition au défilement : une section se dévoile quand elle entre à l'écran. Amélioration
+ * progressive (animations liées au défilement) : un navigateur qui ne les connaît pas affiche
+ * la section telle quelle, et rien ne bouge pour qui demande moins de mouvement.
+ */
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .reveal-on-scroll {
+        animation: rise linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 25%;
+      }
+    }
   }
 }

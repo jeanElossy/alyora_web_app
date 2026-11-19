@@ -71,7 +71,7 @@ export function SecurityPage() {
     <div className={`${CONTAINER} py-12 sm:py-16`}>
       <title>{t('security.documentTitle')}</title>
       <AccountHeader title={t('security.title')} intro={t('security.intro')} />
-      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+      <div className="mt-10 grid animate-rise gap-8 [animation-delay:120ms] lg:grid-cols-2">
         <div className="lg:col-span-2">
           <SessionsCard />
         </div>

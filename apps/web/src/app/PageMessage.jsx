@@ -21,7 +21,7 @@ export function PageMessage({ documentTitle, title, message, eyebrow, numeral, a
   return (
     <section className={`${CONTAINER} py-16 sm:py-28`}>
       <title>{documentTitle}</title>
-      <div className="max-w-2xl">
+      <div className="max-w-2xl animate-rise">
         {numeral ? (
           <p
             aria-hidden="true"
