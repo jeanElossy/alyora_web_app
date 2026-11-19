@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ApiError, networkError } from '../api/api-error.js';
 import { createSessionGuard } from './require-session.js';
 
 /** @param {string} url */
@@ -32,7 +33,7 @@ describe('session guard', () => {
     const guard = createSessionGuard({
       getAccessToken: () => null,
       refreshSession: async () => {
-        throw new Error('refused');
+        throw new ApiError({ code: 'UNAUTHENTICATED', status: 401, message: 'refused' });
       },
     });
 
@@ -46,5 +47,26 @@ describe('session guard', () => {
     expect(response.headers.get('Location')).toBe(
       '/organisateur/connexion?retour=%2Forganisateur%2Finvites%3Fpage%3D2',
     );
+  });
+
+  it.each([
+    ['the network fails', networkError(new TypeError('Failed to fetch'))],
+    [
+      'the API is unavailable',
+      new ApiError({ code: 'SERVICE_UNAVAILABLE', status: 503, message: 'unavailable' }),
+    ],
+  ])('lets the error reach the error page, not the login page, when %s', async (_case, error) => {
+    const guard = createSessionGuard({
+      getAccessToken: () => null,
+      refreshSession: async () => {
+        throw error;
+      },
+    });
+
+    const outcome = await Promise.resolve(
+      guard('/organisateur/connexion')(loaderArgs('http://x/organisateur')),
+    ).catch((/** @type {unknown} */ thrown) => thrown);
+
+    expect(outcome).toBe(error);
   });
 });

@@ -26,8 +26,9 @@ export const unauthenticated = () =>
  * @param {object} [options]
  * @param {() => Promise<Response> | Response} [options.refresh]
  * @param {number} [options.refreshDelayMs]
+ * @param {(url: string) => number} [options.latencyMs] Délai de réponse des autres routes.
  */
-export function createServer({ refresh, refreshDelayMs = 20 } = {}) {
+export function createServer({ refresh, refreshDelayMs = 20, latencyMs = () => 0 } = {}) {
   const state = { validToken: 'fresh-token', refreshCalls: 0 };
   /** @type {Array<{ url: string, init: RequestInit }>} */
   const calls = [];
@@ -37,6 +38,10 @@ export function createServer({ refresh, refreshDelayMs = 20 } = {}) {
       state.refreshCalls += 1;
       await new Promise((resolve) => setTimeout(resolve, refreshDelayMs));
       return refresh ? refresh() : jsonResponse(200, { accessToken: state.validToken });
+    }
+    const delay = latencyMs(url);
+    if (delay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
     const headers = /** @type {Record<string, string>} */ (init.headers ?? {});
     if (headers.Authorization !== `Bearer ${state.validToken}`) {

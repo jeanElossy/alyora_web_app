@@ -23,6 +23,25 @@ async function grantSession(page) {
 }
 
 /**
+ * Simule l'absence de session : l'API refuse le refresh silencieux.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+async function denySession(page) {
+  await page.route('**/api/v1/auth/refresh', (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        code: 'UNAUTHENTICATED',
+        message: 'Authentication required',
+        details: {},
+      }),
+    }),
+  );
+}
+
+/**
  * Bundles d'espace téléchargés par la page.
  *
  * @param {import('@playwright/test').Page} page
@@ -96,6 +115,7 @@ for (const space of PROTECTED_SPACES) {
     test('sends a visitor without session to its login page (forbidden access)', async ({
       page,
     }) => {
+      await denySession(page);
       await page.goto(space.path);
 
       await expect(page.getByRole('heading', { level: 1, name: space.login })).toBeVisible();
@@ -129,9 +149,24 @@ for (const space of PROTECTED_SPACES) {
   });
 }
 
+test('shows an error page, not the login page, when the API cannot be reached', async ({
+  page,
+}) => {
+  await page.route('**/api/v1/auth/refresh', (route) => route.abort('internetdisconnected'));
+  await page.goto('/organisateur');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Un problème est survenu' }),
+  ).toBeVisible();
+  await expect(page.getByText('Connexion impossible.', { exact: false })).toBeVisible();
+  await expect(page).toHaveURL('/organisateur');
+  await expectNoHorizontalScroll(page);
+});
+
 test('moves from the public space to a protected one, loading its bundle on demand', async ({
   page,
 }) => {
+  await denySession(page);
   const loaded = recordSpaceChunks(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

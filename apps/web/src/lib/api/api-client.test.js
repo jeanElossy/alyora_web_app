@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { BASE, createClient, jsonResponse } from '../../../test/api-doubles.js';
-import { ApiError } from './api-error.js';
+import { ApiError, isDefinitiveRejection, networkError } from './api-error.js';
 import { resolveApiBaseUrl } from './api-client.js';
 
 describe('apiClient.request', () => {
@@ -98,6 +98,24 @@ describe('apiClient.request', () => {
 
     expect(error).toBeInstanceOf(DOMException);
     expect(/** @type {DOMException} */ (error).name).toBe('AbortError');
+  });
+});
+
+describe('isDefinitiveRejection', () => {
+  /** @param {number} status */
+  const errorWith = (status) => new ApiError({ code: 'INTERNAL_ERROR', status, message: 'x' });
+
+  it.each([400, 401, 403, 404, 409, 413])('says a %i is final', (status) => {
+    expect(isDefinitiveRejection(errorWith(status))).toBe(true);
+  });
+
+  it.each([200, 408, 429, 500, 502, 503])('says a %i may pass later', (status) => {
+    expect(isDefinitiveRejection(errorWith(status))).toBe(false);
+  });
+
+  it('says a network failure or an error from elsewhere may pass later', () => {
+    expect(isDefinitiveRejection(networkError(new TypeError('Failed to fetch')))).toBe(false);
+    expect(isDefinitiveRejection(new Error('bug'))).toBe(false);
   });
 });
 
