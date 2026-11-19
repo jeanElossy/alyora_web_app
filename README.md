@@ -141,8 +141,7 @@ Les e-mails (vérification d'adresse, réinitialisation, alertes) passent par un
 chiffrés : lancer aussi le worker (`pnpm --filter @alyora/worker dev`, avec dans
 `apps/worker/.env` les mêmes `REDIS_URL` et `DATA_ENCRYPTION_KEY`). En développement, il les
 écrit en JSON dans `apps/worker/.mail-outbox/` (ignoré par git) : le lien de vérification s'y
-trouve. Aucun prestataire d'envoi n'est encore choisi, et le worker refuse de démarrer en
-production tant qu'il ne l'est pas.
+trouve. En production, il les envoie par Brevo (voir l'ADR 0005).
 
 ## Structure
 
@@ -198,16 +197,19 @@ du projet, fixées dans `packages/shared`, et non des réglages.
 
 ### apps/worker
 
-| Variable              | Rôle                                                                    |
-| --------------------- | ----------------------------------------------------------------------- |
-| `NODE_ENV`            | `development`, `test` ou `production`.                                  |
-| `LOG_LEVEL`           | Niveau de log Pino.                                                     |
-| `REDIS_URL`           | Même instance Redis que l'API.                                          |
-| `WORKER_CONCURRENCY`  | Nombre de jobs traités en parallèle par file.                           |
-| `DATA_ENCRYPTION_KEY` | La même que l'API : déchiffre les e-mails de la file.                   |
-| `EMAIL_TRANSPORT`     | `file` seulement (développement) : refusé en production pour l'instant. |
-| `MAIL_OUTBOX_DIR`     | Dossier des e-mails du transport `file`.                                |
-| `MONGODB_URI`         | À venir : même base que l'API.                                          |
+| Variable              | Rôle                                                                          |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `NODE_ENV`            | `development`, `test` ou `production`.                                        |
+| `LOG_LEVEL`           | Niveau de log Pino.                                                           |
+| `REDIS_URL`           | Même instance Redis que l'API.                                                |
+| `WORKER_CONCURRENCY`  | Nombre de jobs traités en parallèle par file.                                 |
+| `DATA_ENCRYPTION_KEY` | La même que l'API : déchiffre les e-mails de la file.                         |
+| `EMAIL_TRANSPORT`     | `brevo` (seul accepté en production) ou `file` (développement).               |
+| `MAIL_OUTBOX_DIR`     | Dossier des e-mails du transport `file`.                                      |
+| `BREVO_API_KEY`       | Clé de l'API Brevo (`xkeysib-…`), jamais une clé SMTP. Transport `brevo`.     |
+| `MAIL_FROM_EMAIL`     | Adresse d'expéditeur, d'un domaine authentifié chez Brevo. Transport `brevo`. |
+| `MAIL_FROM_NAME`      | Nom d'expéditeur. Par défaut : `ALYORA`.                                      |
+| `MONGODB_URI`         | À venir : même base que l'API.                                                |
 
 ### apps/web
 
@@ -220,9 +222,9 @@ Toute variable `VITE_*` se retrouve dans le JavaScript public : aucun secret cô
 
 ## Déploiement
 
-Pour l'instant, deux services, tous deux déployés depuis `main` :
+Pour l'instant, trois services, tous déployés depuis `main` :
 
-- **Web sur Vercel** (https://alyora-web-app.vercel.app), dossier racine `apps/web`,
+- **Web sur Vercel** (https://alyora-web.vercel.app), dossier racine `apps/web`,
   `VITE_API_BASE_URL` vide. `apps/web/vercel.json` :
   - transmet `/api/*` à l'API sur Render. Le navigateur ne parle qu'à une seule origine, donc
     il accepte et renvoie les cookies de refresh et CSRF (`SameSite=Lax`). Sur deux domaines
@@ -238,9 +240,23 @@ Pour l'instant, deux services, tous deux déployés depuis `main` :
   | Pre-Deploy Command | `pnpm --filter @alyora/api migrate:up`         |
   | Health Check Path  | `/health`                                      |
   | `TRUST_PROXY`      | `2` : le proxy de Vercel, puis celui de Render |
-  | `CORS_ORIGINS`     | `https://alyora-web-app.vercel.app`            |
-  | `WEB_APP_URL`      | `https://alyora-web-app.vercel.app`            |
+  | `CORS_ORIGINS`     | `https://alyora-web.vercel.app`                |
+  | `WEB_APP_URL`      | `https://alyora-web.vercel.app`                |
   | `COOKIE_DOMAIN`    | absent : cookies limités au site Vercel        |
+
+- **Worker sur Render** (Background Worker, même région que l'API et Redis) :
+
+  | Réglage               | Valeur                                                |
+  | --------------------- | ----------------------------------------------------- |
+  | Build Command         | `pnpm install --frozen-lockfile`                      |
+  | Start Command         | `pnpm --filter @alyora/worker start`                  |
+  | `REDIS_URL`           | la même que l'API                                     |
+  | `DATA_ENCRYPTION_KEY` | la même que l'API                                     |
+  | `EMAIL_TRANSPORT`     | `brevo`                                               |
+  | `MAIL_FROM_EMAIL`     | `no-reply@alyora.com`, domaine authentifié chez Brevo |
+
+  avec aussi `NODE_ENV=production`, `LOG_LEVEL=info`, `WORKER_CONCURRENCY=5` et
+  `BREVO_API_KEY`.
 
 **Limite connue** : l'API reste joignable directement sur `onrender.com`. En l'appelant sans
 passer par Vercel, un client peut choisir l'IP que voient les limites par IP (le verrouillage

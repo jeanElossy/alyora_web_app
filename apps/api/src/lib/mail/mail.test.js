@@ -73,6 +73,29 @@ describe('mail processor (worker side)', () => {
     expect(logs.text()).not.toMatch(/awa@exemple|jeton|Confirmez/);
   });
 
+  it("logs the provider's message identifier, for tracing on its side", async () => {
+    const box = createSecretBox(randomBytes(32));
+    /** @type {{ sealed: string } | undefined} */
+    let queued;
+    await createQueueMailer({
+      queue: {
+        add: async (_name, data) => {
+          queued = data;
+        },
+      },
+      secretBox: box,
+    }).send(message);
+    const transport = { send: vi.fn(async () => ({ providerMessageId: '<id-42@relay.example>' })) };
+    const { logger, logs } = createTestLogger();
+
+    await createMailProcessor({ secretBox: box, transport, logger })({
+      id: '43',
+      data: /** @type {{ sealed: string }} */ (queued),
+    });
+
+    expect(logs.text()).toContain('<id-42@relay.example>');
+  });
+
   it('fails the job when the payload was not sealed with the same key', async () => {
     const sealed = createSecretBox(randomBytes(32)).encrypt(JSON.stringify(message), 'mail:v1');
     const transport = { send: vi.fn(async () => {}) };

@@ -14,6 +14,7 @@ describe('@alyora/api library entry point', () => {
         'DecryptionError',
         'MAIL_JOB_NAME',
         'MAIL_QUEUE_NAME',
+        'createBrevoTransport',
         'createFileTransport',
         'createLogger',
         'createMailProcessor',

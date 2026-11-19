@@ -1,14 +1,8 @@
-import path from 'node:path';
-import {
-  MAIL_QUEUE_NAME,
-  createFileTransport,
-  createLogger,
-  createMailProcessor,
-  createSecretBox,
-} from '@alyora/api';
+import { MAIL_QUEUE_NAME, createLogger, createMailProcessor, createSecretBox } from '@alyora/api';
 import { Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import { WorkerConfigError, loadWorkerConfig } from './config.js';
+import { createMailTransport } from './mail-transport.js';
 
 export const SERVICE_NAME = 'worker';
 
@@ -69,18 +63,22 @@ export async function startWorker({
     MAIL_QUEUE_NAME,
     createMailProcessor({
       secretBox: createSecretBox(config.dataEncryptionKey),
-      transport: createFileTransport({ directory: path.resolve(config.email.outboxDir) }),
+      transport: createMailTransport(config.email),
       logger,
     }),
     { connection, concurrency: config.concurrency },
   );
-  // Ni destinataire ni contenu dans les logs : le nom et le code de l'erreur seulement.
+  // Ni destinataire ni contenu dans les logs : le nom et les codes de l'erreur seulement (le
+  // code du prestataire, ex. « unauthorized », est filtré par le transport).
   worker.on('failed', (job, error) => {
+    const { code, providerCode } = /** @type {{ code?: unknown, providerCode?: unknown }} */ (
+      error
+    );
     logger.warn(
       {
         jobId: job?.id,
         attemptsMade: job?.attemptsMade,
-        error: { name: error.name, code: /** @type {{ code?: unknown }} */ (error).code },
+        error: { name: error.name, code, providerCode },
       },
       'Email job failed',
     );
@@ -112,6 +110,13 @@ export async function startWorker({
   }
 
   await worker.waitUntilReady();
-  logger.info({ queue: MAIL_QUEUE_NAME, concurrency: config.concurrency }, 'Worker ready');
+  logger.info(
+    {
+      queue: MAIL_QUEUE_NAME,
+      concurrency: config.concurrency,
+      mailTransport: config.email.transport,
+    },
+    'Worker ready',
+  );
   return { close };
 }

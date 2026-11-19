@@ -4,8 +4,15 @@ import path from 'node:path';
 import { MAIL_ENCRYPTION_CONTEXT, mailMessageSchema } from './mail-queue.js';
 
 /**
+ * Accusé d'envoi d'un prestataire : son identifiant du message, pour le suivi chez lui.
+ *
+ * @typedef {object} MailReceipt
+ * @property {string} [providerMessageId]
+ */
+
+/**
  * @typedef {object} MailTransport
- * @property {(message: import('./mail-queue.js').MailMessage) => Promise<void>} send
+ * @property {(message: import('./mail-queue.js').MailMessage) => Promise<MailReceipt | void>} send
  */
 
 /**
@@ -47,7 +54,7 @@ export function createMailProcessor({ secretBox, transport, logger }) {
     const message = mailMessageSchema.parse(
       JSON.parse(secretBox.decrypt(job.data.sealed, MAIL_ENCRYPTION_CONTEXT)),
     );
-    await transport.send(message);
-    logger.info({ jobId: job.id }, 'Email sent');
+    const receipt = await transport.send(message);
+    logger.info({ jobId: job.id, providerMessageId: receipt?.providerMessageId }, 'Email sent');
   };
 }
