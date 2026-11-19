@@ -21,6 +21,9 @@ export const SPACE_MODULES = Object.freeze({
 
 const ENTRY = 'index.html';
 
+/** Page de démonstration : présente seulement dans un build qui l'active (tests de bout en bout). */
+export const DESIGN_SYSTEM_MODULE = 'src/features/design-system/design-system-page.jsx';
+
 /**
  * @typedef {object} ManifestChunk
  * @property {string} file
@@ -109,6 +112,9 @@ function main() {
   const withinBudget = publicSize <= PUBLIC_BUDGET_BYTES;
   lines.push(
     '',
+    manifest[DESIGN_SYSTEM_MODULE]
+      ? 'Page /design-system : PRÉSENTE (build de test, VITE_ENABLE_DESIGN_SYSTEM=true).'
+      : 'Page /design-system : absente, comme en production.',
     `Budget de l'espace public : ${kilobytes(publicSize)} sur ${kilobytes(PUBLIC_BUDGET_BYTES)}` +
       (withinBudget ? ' : respecté.' : ' : DÉPASSÉ.'),
     '',

@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router';
+import { DESIGN_SYSTEM_ENABLED, designSystemRoutes } from '../features/design-system/routes.js';
 import { adminRoutes } from '../spaces/admin/routes.js';
 import { checkinRoutes } from '../spaces/checkin/routes.js';
 import { organizerRoutes } from '../spaces/organizer/routes.js';
@@ -12,7 +13,8 @@ import { RouteLoading } from './RouteLoading.jsx';
  * page, pages, traductions) est dans son propre bundle, chargé par `lazy` à la première visite.
  *
  * - `/` : public et invités ;
- * - `/organisateur`, `/accueil`, `/admin` : espaces protégés, chacun avec sa page de connexion.
+ * - `/organisateur`, `/accueil`, `/admin` : espaces protégés, chacun avec sa page de connexion ;
+ * - `/design-system` : démonstration des composants, hors production seulement.
  *
  * @type {import('react-router').RouteObject[]}
  */
@@ -23,7 +25,13 @@ export const routes = [
     Component: RootLayout,
     ErrorBoundary: ErrorPage,
     HydrateFallback: RouteLoading,
-    children: [publicRoutes, organizerRoutes, checkinRoutes, adminRoutes],
+    children: [
+      publicRoutes,
+      organizerRoutes,
+      checkinRoutes,
+      adminRoutes,
+      ...(DESIGN_SYSTEM_ENABLED ? [designSystemRoutes] : []),
+    ],
   },
 ];
 

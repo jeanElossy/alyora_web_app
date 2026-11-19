@@ -124,18 +124,68 @@ Contrastes WCAG calculés (AA : 4,5:1 pour le texte courant, 3:1 pour un contour
   bundle propre et le bundle initial (point d'entrée, imports statiques, CSS) de chaque espace,
   et échoue si celui de l'espace public dépasse 180 000 octets en gzip. Les polices n'y sont
   pas comptées.
-- Au socle (M0.3a) : 164,6 Ko. React DOM (65 Ko), React Router (32 Ko), Zod (23 Ko, pour valider
+- Au socle (M0.3a) : 164,6 Ko ; avec le design system (M0.3b) : 167,6 Ko. React DOM (65 Ko), React Router (32 Ko), Zod (23 Ko, pour valider
   les réponses d'erreur avec le schéma partagé) et i18next (16 Ko) en font l'essentiel. Les
   photos ne sont pas comptées : ce ne sont pas du code, et elles se chargent après lui.
+
+### Design system (M0.3b)
+
+- 19 composants dans `src/components/ui/`, et rien d'autre : Button, Input, Select, Textarea,
+  Checkbox, Radio (RadioGroup), Modal, Drawer, Toast, Card, Badge, Table, Tabs, Tooltip,
+  Avatar, Spinner, EmptyState, Pagination, Skeleton, plus Field (libellé, aide, erreur).
+  Construits sur les primitives Radix (paquet unifié `radix-ui`) quand le comportement
+  clavier est complexe (Select, Checkbox, RadioGroup, Dialog, Toast, Tabs, Tooltip, Avatar),
+  en HTML natif sinon.
+- Aucun texte en dur : les textes arrivent traduits par l'appelant, ou viennent de l'espace de
+  noms i18next « ui » (fermer, chargement, pagination, messages de validation).
+- Bordure des champs et des cases : jeton `outline` (`#857F76`, 3,97:1 sur blanc, 3,61:1 sur
+  ivoire), car un contrôle doit se distinguer à 3:1 au moins (WCAG 1.4.11). Les filets
+  décoratifs restent à faible opacité.
+- Focus visible sur tout élément interactif (règle globale du thème). Mouvements réduits : les
+  animations deviennent quasi instantanées.
+- Pagination par curseur (précédent, suivant), conforme à la règle du projet sur les grandes
+  collections.
+- Notifications : la file (`toast-store.js`, Zustand) est dans le bundle initial, leur
+  affichage Radix n'est chargé qu'à la première notification. Monté d'office, il ajoutait
+  13 Ko et faisait dépasser le budget (180,2 Ko).
+- Infobulle : Radix la ferme quand la page défile, y compris quand le focus clavier fait
+  défiler jusqu'au déclencheur. Une infobulle ne porte donc jamais seule une information
+  indispensable.
+
+### Formulaires (M0.3b)
+
+- `useZodForm(schema)` branche React Hook Form (`@hookform/resolvers`) sur un schéma Zod de
+  `packages/shared`. Les messages de Zod ne sont jamais affichés : chaque problème devient une
+  clé `form.errors.*` traduite (obligatoire, trop court avec le minimum, e-mail invalide, case
+  à cocher...). Quand la langue change, les champs en erreur sont revalidés.
+- `Form` désactive tous les contrôles pendant l'envoi (`fieldset disabled`, bouton compris).
+  Une erreur VALIDATION_ERROR de l'API s'affiche sous chaque champ concerné, le premier reçoit
+  le focus une fois le formulaire réactivé ; toute erreur s'affiche aussi en tête du
+  formulaire, traduite depuis son code. Une erreur inattendue donne le message générique.
+- Le schéma de la démonstration (`designSystemDemoFormSchema`) est dans `packages/shared`,
+  marqué comme démonstration sans valeur métier.
+
+### Page /design-system (M0.3b)
+
+- Tous les composants dans tous leurs états, en sections, avec un sélecteur de langue qui
+  passe en langue des clés. Elle appelle aussi l'API (`GET /ping`) par TanStack Query.
+- Présente en développement, et dans un build qui l'active (`VITE_ENABLE_DESIGN_SYSTEM=true`,
+  pour les tests de bout en bout). Dans le build de production, la condition vaut `false` à la
+  compilation : ni la route ni son bundle n'existent. Le rapport du build l'indique.
 
 ### Tests
 
 - Vitest et Testing Library (jsdom) : client API (dont les tests de course du refresh), garde
   de session, TanStack Query, traductions, routage de chaque espace (dont l'accès sans session,
-  qui doit être refusé), page d'erreur.
+  qui doit être refusé), page d'erreur, composants du design system (clavier, rôles, noms
+  accessibles), formulaires.
 - Playwright, en 360 px, sur le build de production : mise en page et navigation de chaque
   espace, absence de défilement horizontal, redirection sans session, refresh silencieux, 404
-  par espace, bundles chargés à la demande, lien d'évitement au clavier.
+  par espace, bundles chargés à la demande, lien d'évitement au clavier. Sur la page
+  /design-system : les 19 composants visibles, la page entière parcourue au clavier avec un
+  focus visible à chaque arrêt, fenêtre et panneau (focus piégé, Échap, focus rendu), liste,
+  onglets, infobulle, notification, formulaire (erreurs, envoi, erreur de l'API), appel à
+  l'API, et aucun texte hors traductions en langue des clés.
 
 ### Dépendances
 
@@ -146,7 +196,8 @@ react-i18next 18.0.1, tailwindcss et @tailwindcss/vite 4.3.5, @fontsource-variab
 @fontsource/cormorant-garamond 5.3.0, et pour les tests @testing-library/react 16.3.3,
 @testing-library/user-event 14.6.9, jsdom 31.0.0, @playwright/test 1.65.0. S'y ajoutent
 @testing-library/dom 10.4.2 (dépendance pair obligatoire de @testing-library/react) et
-@types/node (déjà utilisé par l'API et le worker).
+@types/node (déjà utilisé par l'API et le worker). M0.3b : radix-ui 1.8.1, react-hook-form
+7.92.0, @hookform/resolvers 7.0.6.
 
 ## Conséquences
 

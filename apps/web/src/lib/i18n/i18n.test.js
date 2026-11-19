@@ -1,6 +1,8 @@
 import { CLIENT_ERROR_CODES, ERROR_CODES } from '@alyora/shared';
 import { afterEach, describe, expect, it } from 'vitest';
 import common from '../../locales/common/fr.json';
+import ui from '../../components/ui/locales/fr.json';
+import designSystem from '../../features/design-system/locales/fr.json';
 import admin from '../../spaces/admin/locales/fr.json';
 import checkin from '../../spaces/checkin/locales/fr.json';
 import organizer from '../../spaces/organizer/locales/fr.json';
@@ -46,7 +48,7 @@ describe('i18n', () => {
   });
 
   it('never leaves a translation empty', () => {
-    for (const resources of [common, publicSpace, organizer, checkin, admin]) {
+    for (const resources of [common, ui, publicSpace, organizer, checkin, admin, designSystem]) {
       for (const key of leafKeys(resources)) {
         const value = key
           .split('.')
