@@ -22,3 +22,7 @@ logs/
 .idea/
 .DS_Store
 *.swp
+
+# Rapports de Playwright
+playwright-report/
+test-results/

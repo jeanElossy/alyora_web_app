@@ -1,0 +1,27 @@
+{
+  "space": {
+    "name": "Administration"
+  },
+  "nav": {
+    "label": "Navigation de l’administration",
+    "home": "Vue d’ensemble"
+  },
+  "home": {
+    "documentTitle": "Administration · ALYORA",
+    "title": "Vue d’ensemble",
+    "intro": "Le suivi de la plateforme ALYORA, réservé à son équipe.",
+    "emptyTitle": "Rien à signaler",
+    "emptyMessage": "Les outils d’administration de la plateforme apparaîtront ici."
+  },
+  "notFound": {
+    "documentTitle": "Page introuvable · Administration",
+    "title": "Page introuvable",
+    "message": "Cette page n’existe pas dans l’administration.",
+    "back": "Revenir à la vue d’ensemble"
+  },
+  "login": {
+    "documentTitle": "Connexion · Administration",
+    "title": "Connexion à l’administration",
+    "message": "La connexion à l’administration sera bientôt disponible."
+  }
+}

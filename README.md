@@ -52,10 +52,11 @@ cp apps/web/.env.example apps/web/.env.local
 | `pnpm lint`                                | ESLint, vérification Prettier et vérification JSDoc (`tsc`).                            |
 | `pnpm format`                              | Reformate tout le dépôt avec Prettier.                                                  |
 | `pnpm test`                                | Lance les tests Vitest de tous les paquets (API : couverture de `src/lib`, seuil 80 %). |
-| `pnpm -r build`                            | Build de tous les paquets qui en ont un (aujourd'hui : web).                            |
+| `pnpm -r build`                            | Build de tous les paquets qui en ont un (aujourd'hui : web, avec le rapport de budget). |
 | `pnpm --filter @alyora/api dev`            | Démarre l'API en mode watch.                                                            |
 | `pnpm --filter @alyora/worker dev`         | Démarre le worker en mode watch.                                                        |
 | `pnpm --filter @alyora/web dev`            | Démarre le serveur de développement Vite.                                               |
+| `pnpm --filter @alyora/web test:e2e`       | Tests de bout en bout Playwright, en 360 px, sur le build de production.                |
 | `pnpm --filter @alyora/api migrate:status` | État des migrations MongoDB (`migrate:up`, `migrate:down`, `migrate:create <nom>`).     |
 
 Chaque paquet expose aussi ses propres scripts (`dev`, `start`, `test`, `typecheck`, `build`),
@@ -68,6 +69,25 @@ jetable (image `redis:8`), supprimé à la fin. Ils n'ont donc besoin ni de Mong
 installés, mais **Docker est requis**. Pour utiliser un Redis existant à la place, définir
 `REDIS_TEST_URL` (les tests y écrivent des clés `rl:test-*`, qui expirent en une minute). Un arrêt brutal des tests peut laisser un
 conteneur : `docker rm -f $(docker ps -q --filter label=alyora-test=redis)` le supprime.
+
+Les tests de bout en bout du web demandent Chromium pour Playwright, à installer une fois :
+`pnpm --filter @alyora/web exec playwright install chromium`. Ils construisent l'application,
+la servent avec `vite preview` et simulent les réponses de l'API.
+
+## Application web
+
+Quatre espaces, chacun dans son propre bundle, chargé à la première visite :
+
+| Chemin          | Espace                          | Accès                                    |
+| --------------- | ------------------------------- | ---------------------------------------- |
+| `/`             | Public (et invités)             | Libre                                    |
+| `/organisateur` | Organisateur et collaborateurs  | Session, sinon `/organisateur/connexion` |
+| `/accueil`      | Accueil des invités le jour J   | Session, sinon `/accueil/connexion`      |
+| `/admin`        | Administration de la plateforme | Session, sinon `/admin/connexion`        |
+
+`pnpm --filter @alyora/web build` affiche le poids de chaque espace et échoue si le bundle
+initial de l'espace public dépasse 180 Ko compressés. Les décisions du socle web sont dans
+[docs/decisions/0003-web-foundation.md](./docs/decisions/0003-web-foundation.md).
 
 ## API
 
@@ -104,7 +124,9 @@ apps/
               de bord, consommé par le worker. src/server.js : point d'entrée du processus.
   worker/     Traitements longs et différés (BullMQ). Importe le code de l'API via le
               workspace, sans rien dupliquer.
-  web/        Application React (Vite).
+  web/        Application React (Vite). src/app/ : routeur, fournisseurs, pages d'erreur ;
+              src/spaces/ : un dossier par espace ; src/lib/ : client API, session, i18n ;
+              src/components/ui/ : design system.
 packages/
   shared/     Code partagé front et back : schemas/ (Zod), constants/, errors/, permissions/.
   config/     Configuration partagée : ESLint (flat config), Prettier, jsconfig de base.
@@ -155,9 +177,9 @@ annoncée au démarrage en développement et en test ; **à venir** : lue par un
 
 ### apps/web
 
-| Variable            | Rôle                                             |
-| ------------------- | ------------------------------------------------ |
-| `VITE_API_BASE_URL` | URL de base de l'API, préfixe `/api/v1` compris. |
+| Variable            | Rôle                                                                              |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL` | URL de base de l'API, préfixe `/api/v1` compris. Vide : même origine (`/api/v1`). |
 
 Toute variable `VITE_*` se retrouve dans le JavaScript public : aucun secret côté web.
 
@@ -170,10 +192,11 @@ Toute variable `VITE_*` se retrouve dans le JavaScript public : aucun secret cô
 
 ## Intégration continue
 
-`.github/workflows/ci.yml` s'exécute sur chaque pull request. Cinq jobs tournent en parallèle :
+`.github/workflows/ci.yml` s'exécute sur chaque pull request. Six jobs tournent en parallèle :
 
 1. lint, format et typecheck ;
 2. tests ;
-3. build ;
-4. `pnpm audit` (échoue sur les vulnérabilités hautes et critiques) ;
-5. scan de secrets avec gitleaks (version fixée, checksum vérifié, historique complet).
+3. build (avec le budget du bundle public) ;
+4. tests de bout en bout Playwright, en 360 px ;
+5. `pnpm audit` (échoue sur les vulnérabilités hautes et critiques) ;
+6. scan de secrets avec gitleaks (version fixée, checksum vérifié, historique complet).

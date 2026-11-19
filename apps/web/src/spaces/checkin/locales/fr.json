@@ -1,0 +1,27 @@
+{
+  "space": {
+    "name": "Accueil des invités"
+  },
+  "nav": {
+    "label": "Navigation de l’accueil des invités",
+    "home": "Aujourd’hui"
+  },
+  "home": {
+    "documentTitle": "Accueil des invités · ALYORA",
+    "title": "Accueil du jour",
+    "intro": "Préparez l’arrivée des invités et suivez l’accueil en temps réel.",
+    "emptyTitle": "Aucun accueil prévu aujourd’hui",
+    "emptyMessage": "Le contrôle des invités à l’entrée du mariage apparaîtra ici."
+  },
+  "notFound": {
+    "documentTitle": "Page introuvable · Accueil des invités",
+    "title": "Page introuvable",
+    "message": "Cette page n’existe pas dans l’espace d’accueil.",
+    "back": "Revenir à l’accueil des invités"
+  },
+  "login": {
+    "documentTitle": "Connexion · Accueil des invités",
+    "title": "Connexion à l’accueil des invités",
+    "message": "La connexion à l’espace d’accueil sera bientôt disponible."
+  }
+}

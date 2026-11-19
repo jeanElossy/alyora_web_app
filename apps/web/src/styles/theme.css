@@ -1,0 +1,78 @@
+@import 'tailwindcss';
+
+/*
+ * Tokens de la charte ALYORA. La palette par défaut de Tailwind est retirée : seules ces
+ * couleurs existent, si bien qu'une couleur hors charte ne peut pas apparaître par erreur.
+ *
+ * Contrastes WCAG (calculés, voir docs/decisions/0003-web-foundation.md) :
+ * - texte courant autorisé : forest / ivory (10,93), charcoal / ivory (13,58),
+ *   charcoal / champagne (7,73), champagne / forest (6,22), champagne-deep / ivory (5,00),
+ *   muted / ivory (6,24), danger / ivory (6,09), warning / ivory (5,40), white / forest (12,00) ;
+ * - interdit pour du texte et pour un contour : champagne sur ivory (1,76) ou sur white
+ *   (1,93), forest sur charcoal (1,24). Le champagne n'écrit jamais sur un fond clair : on
+ *   utilise champagne-deep.
+ */
+@theme {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+
+  --color-forest: #173d32;
+  --color-champagne: #d5b77b;
+  --color-champagne-deep: #786745;
+  --color-ivory: #f8f4eb;
+  --color-charcoal: #292723;
+
+  --color-muted: #5f5a51;
+  --color-danger: #a8321f;
+  --color-warning: #8a5a00;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+}
+
+@layer base {
+  /*
+   * Typographie : Inter pour le texte, avec ses variantes modernes (a à un seul étage, chiffres
+   * ouverts) ; Cormorant Garamond pour les titres, en 500 et 600 seulement. Les titres sont
+   * équilibrés sur leurs lignes, les paragraphes évitent les mots isolés en fin de bloc.
+   */
+  body {
+    @apply bg-ivory font-sans text-charcoal antialiased;
+    font-feature-settings:
+      'cv11' 1,
+      'ss01' 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Sélection de texte : charcoal sur champagne (7,73:1). */
+  ::selection {
+    background-color: var(--color-champagne);
+    color: var(--color-charcoal);
+  }
+
+  /*
+   * Focus visible sur tout élément interactif : un contour forest sur fond clair (10,93:1),
+   * champagne sur les surfaces sombres (6,22:1 sur forest).
+   */
+  :focus-visible {
+    outline: 2px solid var(--color-forest);
+    outline-offset: 2px;
+  }
+
+  .surface-dark :focus-visible {
+    outline-color: var(--color-champagne);
+  }
+}
