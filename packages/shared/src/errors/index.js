@@ -27,3 +27,18 @@ export const ERROR_CODES = Object.freeze(
     Object.fromEntries(Object.keys(ERROR_CATALOG).map((code) => [code, code]))
   ),
 );
+
+/**
+ * Codes d'erreur produits par le client web lui-même, quand l'API n'a pas pu répondre dans le
+ * format normalisé. Séparés du catalogue : ils n'ont pas de statut HTTP, et l'API ne les
+ * renvoie jamais.
+ *
+ * - `NETWORK_ERROR` : la requête n'a pas abouti (hors ligne, DNS, connexion refusée).
+ * - `INVALID_RESPONSE` : l'API a répondu, mais pas dans le format attendu.
+ */
+export const CLIENT_ERROR_CODES = Object.freeze({
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  INVALID_RESPONSE: 'INVALID_RESPONSE',
+});
+
+/** @typedef {keyof typeof CLIENT_ERROR_CODES} ClientErrorCode */

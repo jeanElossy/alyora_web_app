@@ -1,0 +1,40 @@
+{
+  "space": {
+    "name": "Mariages"
+  },
+  "nav": {
+    "label": "Navigation principale",
+    "home": "Accueil",
+    "organizer": "Espace organisateur"
+  },
+  "home": {
+    "documentTitle": "ALYORA · Votre mariage, orchestré avec élégance",
+    "eyebrow": "Plateforme de mariage",
+    "title": "Votre mariage,",
+    "titleAccent": "orchestré avec élégance.",
+    "intro": "ALYORA réunit en un seul lieu l’invitation de vos proches, leurs réponses et leur accueil le jour J.",
+    "cta": "Accéder à l’espace organisateur",
+    "discover": "Découvrir",
+    "steps": {
+      "title": "Trois temps, un seul fil conducteur",
+      "invite": {
+        "title": "Inviter",
+        "text": "Une invitation personnelle pour chacun de vos proches, envoyée au bon moment."
+      },
+      "confirm": {
+        "title": "Confirmer",
+        "text": "Les réponses arrivent au fil de l’eau, prêtes à nourrir votre plan de table."
+      },
+      "welcome": {
+        "title": "Accueillir",
+        "text": "Le jour J, chaque invité est accueilli en quelques secondes, sans liste papier."
+      }
+    }
+  },
+  "notFound": {
+    "documentTitle": "Page introuvable · ALYORA",
+    "title": "Page introuvable",
+    "message": "Cette page n’existe pas ou a été déplacée.",
+    "back": "Revenir à l’accueil"
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ERROR_CATALOG, ERROR_CODES } from './index.js';
+import { CLIENT_ERROR_CODES, ERROR_CATALOG, ERROR_CODES } from './index.js';
 
 describe('error catalog', () => {
   it('exposes every catalog entry as a code whose value is its own name', () => {
@@ -21,5 +21,20 @@ describe('error catalog', () => {
     expect(Object.isFrozen(ERROR_CATALOG)).toBe(true);
     expect(Object.isFrozen(ERROR_CATALOG.NOT_FOUND)).toBe(true);
     expect(Object.isFrozen(ERROR_CODES)).toBe(true);
+  });
+});
+
+describe('client error codes', () => {
+  it('never reuse a code of the API catalog', () => {
+    for (const code of Object.keys(CLIENT_ERROR_CODES)) {
+      expect(Object.hasOwn(ERROR_CATALOG, code)).toBe(false);
+    }
+  });
+
+  it('are codes whose value is their own name, frozen', () => {
+    for (const [key, value] of Object.entries(CLIENT_ERROR_CODES)) {
+      expect(value).toBe(key);
+    }
+    expect(Object.isFrozen(CLIENT_ERROR_CODES)).toBe(true);
   });
 });

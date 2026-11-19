@@ -1,0 +1,28 @@
+{
+  "brand": "ALYORA",
+  "skipToContent": "Aller au contenu",
+  "loading": "Chargement en cours…",
+  "backToPublicHome": "Revenir à l’accueil d’ALYORA",
+  "footer": "© {{year}} ALYORA. Tous droits réservés.",
+  "loginTagline": "Chaque mariage mérite une organisation à sa hauteur.",
+  "errors": {
+    "VALIDATION_ERROR": "Certaines informations sont invalides. Vérifiez les champs signalés.",
+    "UNAUTHENTICATED": "Votre session a expiré. Reconnectez-vous pour continuer.",
+    "FORBIDDEN": "Vous n’avez pas accès à cette page.",
+    "NOT_FOUND": "La ressource demandée est introuvable.",
+    "PAYLOAD_TOO_LARGE": "Le contenu envoyé est trop volumineux.",
+    "RATE_LIMITED": "Trop de tentatives. Patientez quelques instants avant de réessayer.",
+    "INTERNAL_ERROR": "Une erreur inattendue est survenue. Réessayez dans quelques instants.",
+    "SERVICE_UNAVAILABLE": "Le service est momentanément indisponible. Réessayez plus tard.",
+    "NETWORK_ERROR": "Connexion impossible. Vérifiez votre accès à Internet, puis réessayez.",
+    "INVALID_RESPONSE": "Le serveur a répondu de façon inattendue. Réessayez dans quelques instants."
+  },
+  "errorPage": {
+    "documentTitle": "Erreur · ALYORA",
+    "title": "Un problème est survenu",
+    "notFoundTitle": "Page introuvable",
+    "reference": "Référence à communiquer au support : {{requestId}}",
+    "home": "Revenir à l’accueil",
+    "retry": "Réessayer"
+  }
+}
