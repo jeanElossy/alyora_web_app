@@ -116,6 +116,15 @@ l'état exige l'en-tête `X-CSRF-Token` (jeton de `GET /api/v1/auth/csrf`) ; l'i
 aussi `Idempotency-Key`. Les décisions (jetons, sessions, limites, verrouillage) sont dans
 [docs/decisions/0004-auth.md](./docs/decisions/0004-auth.md).
 
+Autorisations (`/api/v1/events/:eventId`) : `permissions/me` (rôle et permissions de l'appelant
+sur l'événement, pour l'affichage). Chaque route d'un événement est gardée par
+`requirePermission('module:action')`, une permission du catalogue de
+`packages/shared/src/permissions` ; seul un collaborateur de l'événement y accède, et un compte
+étranger reçoit 404, jamais 403. Toute requête MongoDB sur une collection cloisonnée doit filtrer
+sur `eventId` ou `organizationId`, sinon elle est refusée, dans tous les environnements. Les
+décisions (rôles, cloisonnement, cache, audit, tests types) sont dans
+[docs/decisions/0006-permissions.md](./docs/decisions/0006-permissions.md).
+
 Toute erreur suit le format `{ code, message, details }`, avec un code du catalogue de
 `packages/shared`. Chaque réponse porte un en-tête `X-Request-Id`, repris dans tous les logs
 de la requête. Les décisions du socle de l'API sont dans
