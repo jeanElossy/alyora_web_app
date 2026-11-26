@@ -1,4 +1,12 @@
 export {
+  eventIdParamsSchema,
+  eventRoleSchema,
+  myPermissionsResponseSchema,
+  objectIdSchema,
+  permissionSchema,
+  roleKeySchema,
+} from './access.schema.js';
+export {
   accountTypeSchema,
   emailSchema,
   emailedTokenSchema,
@@ -51,6 +59,8 @@ export {
 } from './two-factor.schema.js';
 
 // Types réexportés (un typedef JSDoc n'est pas transmis par `export ... from`).
+/** @typedef {import('./access.schema.js').EventRole} EventRole */
+/** @typedef {import('./access.schema.js').MyPermissionsResponse} MyPermissionsResponse */
 /** @typedef {import('./error-response.schema.js').ErrorIssue} ErrorIssue */
 /** @typedef {import('./error-response.schema.js').ErrorDetails} ErrorDetails */
 /** @typedef {import('./error-response.schema.js').ErrorResponse} ErrorResponse */
