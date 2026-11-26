@@ -87,7 +87,7 @@ export function createReauthenticationService(deps, { lock, secondFactor }) {
       const sessionId = requireSessionId(context);
       const user = await User.findOne(
         { _id: userId, deletedAt: null, status: 'active' },
-        { email: 1, firstName: 1, lastName: 1, timezone: 1 },
+        { email: 1, firstName: 1, lastName: 1, timezone: 1, locale: 1 },
       ).lean();
       if (!user) {
         throw new AppError('UNAUTHENTICATED');

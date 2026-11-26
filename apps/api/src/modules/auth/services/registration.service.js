@@ -10,7 +10,7 @@ import { sendSafely } from './auth-service-deps.js';
 /** @typedef {import('./auth-service-deps.js').ServiceContext} ServiceContext */
 
 /** Ce qu'il faut d'un compte pour lui écrire. */
-const RECIPIENT_FIELDS = { email: 1, firstName: 1, timezone: 1 };
+const RECIPIENT_FIELDS = { email: 1, firstName: 1, timezone: 1, locale: 1 };
 
 /**
  * Inscription. La réponse est toujours la même (« demande acceptée »), que l'adresse ait déjà

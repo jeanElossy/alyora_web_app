@@ -124,7 +124,7 @@ export function createRefreshService(deps) {
         if (outcome.firstDetection) {
           const owner = await User.findOne(
             { _id: outcome.userId, deletedAt: null },
-            { email: 1, firstName: 1, timezone: 1 },
+            { email: 1, firstName: 1, timezone: 1, locale: 1 },
           ).lean();
           if (owner) {
             await sendSafely(deps, emails.suspiciousSession(owner), 'suspicious_session');

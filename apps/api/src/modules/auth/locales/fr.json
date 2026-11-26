@@ -1,0 +1,64 @@
+{
+  "emails": {
+    "greeting": "Bonjour {{firstName}},",
+    "signature": "L’équipe ALYORA",
+    "verifyEmail": {
+      "subject": "Confirmez votre adresse e-mail",
+      "welcome": "Bienvenue sur ALYORA. Pour activer votre compte, confirmez votre adresse e-mail.",
+      "validity_one": "Ce lien est valable {{count}} heure et ne sert qu’une fois.",
+      "validity_other": "Ce lien est valable {{count}} heures et ne sert qu’une fois.",
+      "notYou": "Si vous n’avez pas créé de compte, ignorez ce message.",
+      "action": "Confirmer mon adresse"
+    },
+    "accountExists": {
+      "subject": "Une inscription a été tentée avec votre adresse",
+      "attempt": "Quelqu’un a essayé de créer un compte ALYORA avec votre adresse e-mail, qui a déjà un compte.",
+      "ifYou": "Si c’était vous, connectez-vous, ou choisissez un nouveau mot de passe si vous l’avez oublié.",
+      "otherwise": "Sinon, ignorez ce message : votre compte n’a pas été modifié.",
+      "action": "Choisir un nouveau mot de passe"
+    },
+    "resetPassword": {
+      "subject": "Choisissez un nouveau mot de passe",
+      "request": "Vous avez demandé à changer le mot de passe de votre compte ALYORA.",
+      "validity_one": "Ce lien est valable {{count}} minute et ne sert qu’une fois.",
+      "validity_other": "Ce lien est valable {{count}} minutes et ne sert qu’une fois.",
+      "notYou": "Si vous n’êtes pas à l’origine de cette demande, ignorez ce message : votre mot de passe reste inchangé.",
+      "action": "Choisir un nouveau mot de passe"
+    },
+    "passwordChanged": {
+      "subject": "Votre mot de passe a été modifié",
+      "changed": "Le mot de passe de votre compte ALYORA a été modifié le {{date}}.",
+      "allDevices": "Par sécurité, tous vos appareils ont été déconnectés.",
+      "otherDevices": "Par sécurité, vos autres appareils ont été déconnectés.",
+      "notYou": "Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe.",
+      "action": "Sécuriser mon compte"
+    },
+    "accountLocked": {
+      "subject": "Connexion à votre compte suspendue",
+      "failures": "Plusieurs tentatives de connexion à votre compte ALYORA ont échoué.",
+      "until": "Par sécurité, la connexion est suspendue jusqu’au {{date}}.",
+      "notYou": "Si ce n’était pas vous, choisissez un nouveau mot de passe dès que possible.",
+      "action": "Choisir un nouveau mot de passe"
+    },
+    "twoFactorEnabled": {
+      "subject": "Double authentification activée",
+      "active": "La double authentification est maintenant active sur votre compte ALYORA : chaque connexion demandera aussi le code de votre application.",
+      "backupCodes": "Gardez vos codes de secours en lieu sûr : chacun permet une connexion si vous perdez votre téléphone. Vos autres appareils ont été déconnectés.",
+      "notYou": "Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe.",
+      "action": "Sécuriser mon compte"
+    },
+    "twoFactorDisabled": {
+      "subject": "Double authentification désactivée",
+      "inactive": "La double authentification a été désactivée sur votre compte ALYORA : la connexion ne demande plus que votre mot de passe.",
+      "notYou": "Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe, puis réactivez-la.",
+      "action": "Sécuriser mon compte"
+    },
+    "suspiciousSession": {
+      "subject": "Activité inhabituelle sur votre compte",
+      "reuse": "Une connexion de votre compte ALYORA a été réutilisée d’une façon qui laisse penser à un vol.",
+      "signedOut": "Par sécurité, nous avons déconnecté l’appareil concerné. Reconnectez-vous pour continuer.",
+      "notYou": "Si vous ne reconnaissez pas cette activité, choisissez un nouveau mot de passe.",
+      "action": "Choisir un nouveau mot de passe"
+    }
+  }
+}

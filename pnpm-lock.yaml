@@ -229,6 +229,9 @@ importers:
       helmet:
         specifier: ^8.3.0
         version: 8.3.0
+      i18next:
+        specifier: 27.1.1
+        version: 27.1.1(typescript@7.0.2)
       ioredis:
         specifier: ^6.0.0
         version: 6.0.0
