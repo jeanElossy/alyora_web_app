@@ -1,15 +1,23 @@
 import { randomUUID } from 'node:crypto';
-import { ROLE_KEYS, isOwnerRole } from '@alyora/shared';
+import { ROLE_KEYS, isOwnerRole, permissionsOfRole } from '@alyora/shared';
 import mongoose from 'mongoose';
 import { beforeAll } from 'vitest';
 import { up as createAccessCollections } from '../../migrations/20261126090000-access-collections.js';
+import { createAuditLog } from '../../src/lib/audit/audit-log.js';
 import { createAccessTokens } from '../../src/lib/auth/access-token.js';
+import { createServiceContext } from '../../src/lib/context/service-context.js';
+import { createKeyedHasher } from '../../src/lib/crypto/keyed-hash.js';
+import { createAccessEmails } from '../../src/modules/access/access-emails.js';
 import { Collaborator } from '../../src/modules/access/models/collaborator.model.js';
 import { Organization } from '../../src/modules/access/models/organization.model.js';
+import { createAccessServices } from '../../src/modules/access/services/access-services.js';
+import { createPermissionResolver } from '../../src/modules/access/services/permission-resolver.js';
 import { systemClock } from '../../src/modules/auth/auth-module.js';
 import { User } from '../../src/modules/auth/models/user.model.js';
-import { TEST_SECRETS } from './app.js';
-import { createBrowser, useAuthDatabase } from './auth.js';
+import { TEST_SECRETS, createTestLogger } from './app.js';
+import { createBrowser, createTestClock, useAuthDatabase } from './auth.js';
+import { createRecordingMailer } from './mail.js';
+import { createMemoryPermissionCache } from './permission-cache.js';
 
 /** @typedef {import('@alyora/shared').RoleKey} RoleKey */
 /** @typedef {import('@alyora/shared').Permission} Permission */
@@ -181,3 +189,57 @@ export function apiAs(app, actor) {
 
 /** Un identifiant qui ne désigne rien. */
 export const unknownId = () => new mongoose.Types.ObjectId().toString();
+
+/**
+ * Services de l'équipe d'un événement, avec des dépendances de test : horloge réglable (partie
+ * de maintenant), mailer qui enregistre, logs capturés, cache des permissions en mémoire.
+ */
+export function createTestAccessServices() {
+  const clock = createTestClock(new Date());
+  const mailer = createRecordingMailer();
+  const { logger, logs } = createTestLogger();
+  const cache = createMemoryPermissionCache();
+  const resolver = createPermissionResolver({ cache, logger });
+  const services = createAccessServices({
+    clock,
+    logger,
+    mailer,
+    emails: createAccessEmails({ webAppUrl: 'http://localhost:5173' }),
+    auditLog: createAuditLog({ keyedHasher: createKeyedHasher(TEST_SECRETS.HASH_SECRET), clock }),
+    resolver,
+  });
+  return { services, clock, mailer, logs, resolver, cache };
+}
+
+/**
+ * Contexte de service d'un acteur de l'événement, comme le construit eventServiceContext :
+ * les permissions de son rôle prédéfini (aucune pour un compte étranger).
+ *
+ * @param {SeededEvent} event
+ * @param {RoleKey | 'outsider'} name
+ */
+export function contextAs(event, name) {
+  const actor = event.actors[name];
+  return createServiceContext({
+    userId: actor.userId,
+    eventId: event.eventId,
+    organizationId: event.organizationId,
+    permissions: name === 'outsider' ? [] : permissionsOfRole(name),
+    ip: '203.0.113.7',
+    userAgent: 'Test',
+  });
+}
+
+/**
+ * Événement et jeton du lien d'un e-mail d'invitation (dans le fragment).
+ *
+ * @param {{ text: string }} message
+ * @returns {{ eventId: string, token: string }}
+ */
+export function invitationLinkFrom(message) {
+  const match = /#evenement=([0-9a-f]{24})&jeton=([A-Za-z0-9_-]{22})/.exec(message.text);
+  if (!match?.[1] || !match[2]) {
+    throw new Error('No invitation link in this e-mail');
+  }
+  return { eventId: match[1], token: match[2] };
+}

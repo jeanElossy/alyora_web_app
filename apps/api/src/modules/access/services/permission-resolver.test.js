@@ -170,7 +170,7 @@ describe('permission resolver', () => {
       permissions: [],
     });
     expect(logs.entries()).toContainEqual(
-      expect.objectContaining({ event: 'access.unknown_role', collaboratorId }),
+      expect.objectContaining({ event: 'access.unknown_role', recordId: collaboratorId }),
     );
   });
 

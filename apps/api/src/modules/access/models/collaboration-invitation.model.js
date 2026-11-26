@@ -3,7 +3,7 @@ import { tenantScoped } from '../../../lib/tenancy/tenant-scope.plugin.js';
 import { requireSingleRoleAssignment, roleAssignmentFields } from './role-assignment.fields.js';
 
 export const INVITATION_STATUSES = Object.freeze(
-  /** @type {const} */ (['pending', 'accepted', 'revoked']),
+  /** @type {const} */ (['pending', 'accepted', 'revoked', 'expired']),
 );
 
 /**

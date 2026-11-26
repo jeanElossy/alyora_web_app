@@ -1,24 +1,14 @@
-import {
-  isRoleKey,
-  normalizePermissions,
-  permissionsOfRole,
-  unknownPermissions,
-} from '@alyora/shared';
 import { Collaborator } from '../models/collaborator.model.js';
-import { CustomRole } from '../models/custom-role.model.js';
+import { resolveAssignments } from './role-assignment.js';
 
 /** @typedef {import('../../../lib/auth/require-permission.js').EventAccess} EventAccess */
 /** @typedef {{ eventId: string, userId: string }} AccessKey */
 
-/** @param {unknown} value */
-const isSet = (value) => value !== null && value !== undefined;
-
 /**
- * Résolution des permissions effectives d'un compte sur un événement, derrière le cache :
+ * Résolution des permissions effectives d'un compte sur un événement :
  * 1. le collaborateur actif (eventId, userId) ; aucun : null, soit un 404 ;
  * 2. son rôle prédéfini, son rôle personnalisé (cherché dans l'organisation du collaborateur
- *    seulement : un rôle d'une autre organisation ne donne rien) ou sa liste explicite ;
- * 3. croisé avec le catalogue : une permission inconnue est écartée et signalée.
+ *    seulement) ou sa liste explicite, croisé avec le catalogue (voir role-assignment.js).
  *
  * Un rôle personnalisé supprimé, ou une clé de rôle inconnue, laisse le collaborateur sans
  * aucune permission (403 sur tout, sauf les routes ouvertes à tout collaborateur).
@@ -29,87 +19,55 @@ const isSet = (value) => value !== null && value !== undefined;
  */
 export function createPermissionResolver({ cache, logger }) {
   /**
-   * @param {unknown[]} values
-   * @param {Record<string, unknown>} where
-   */
-  function knownPermissions(values, where) {
-    const unknown = unknownPermissions(values);
-    if (unknown.length > 0) {
-      logger.warn(
-        { event: 'access.unknown_permissions', count: unknown.length, ...where },
-        'Permissions missing from the catalog were ignored',
-      );
-    }
-    return normalizePermissions(values);
-  }
-
-  /**
-   * @param {{ _id: unknown, organizationId: unknown, roleKey?: unknown, customRoleId?: unknown, permissions?: unknown[] | null }} collaborator
-   * @returns {Promise<Pick<EventAccess, 'role' | 'permissions'>>}
-   */
-  async function resolveRole(collaborator) {
-    const collaboratorId = String(collaborator._id);
-    if (isSet(collaborator.roleKey)) {
-      if (!isRoleKey(collaborator.roleKey)) {
-        logger.warn({ event: 'access.unknown_role', collaboratorId }, 'Unknown role key ignored');
-        return { role: { type: 'explicit' }, permissions: Object.freeze([]) };
-      }
-      return {
-        role: { type: 'predefined', key: collaborator.roleKey },
-        permissions: permissionsOfRole(collaborator.roleKey),
-      };
-    }
-    if (isSet(collaborator.customRoleId)) {
-      const customRoleId = String(collaborator.customRoleId);
-      const customRole = await CustomRole.findOne(
-        { _id: customRoleId, organizationId: String(collaborator.organizationId), deletedAt: null },
-        { permissions: 1 },
-      ).lean();
-      if (!customRole) {
-        logger.warn(
-          { event: 'access.custom_role_missing', collaboratorId, customRoleId },
-          'Custom role not found in the organization: no permission granted',
-        );
-        return { role: { type: 'custom', customRoleId }, permissions: Object.freeze([]) };
-      }
-      return {
-        role: { type: 'custom', customRoleId },
-        permissions: knownPermissions(customRole.permissions, { customRoleId }),
-      };
-    }
-    return {
-      role: { type: 'explicit' },
-      permissions: knownPermissions(collaborator.permissions ?? [], { collaboratorId }),
-    };
-  }
-
-  /**
    * @param {AccessKey} key
+   * @param {import('mongoose').ClientSession | null} session
    * @returns {Promise<EventAccess | null>}
    */
-  async function load({ eventId, userId }) {
+  async function load({ eventId, userId }, session) {
     const collaborator = await Collaborator.findOne(
       { eventId, userId, status: 'active' },
       { organizationId: 1, roleKey: 1, customRoleId: 1, permissions: 1 },
-    ).lean();
+    )
+      .session(session)
+      .lean();
     if (!collaborator) {
       return null;
     }
+    const organizationId = String(collaborator.organizationId);
+    const [resolved] = await resolveAssignments([collaborator], {
+      organizationId,
+      logger,
+      session,
+    });
     return Object.freeze({
       eventId,
-      organizationId: String(collaborator.organizationId),
+      organizationId,
       collaboratorId: String(collaborator._id),
-      ...(await resolveRole(collaborator)),
+      .../** @type {import('./role-assignment.js').ResolvedRole} */ (resolved),
     });
   }
 
   return {
     /**
+     * Accès d'un compte, depuis le cache (60 s au plus) : ce que lisent les gardes.
+     *
      * @param {AccessKey} key
      * @returns {Promise<EventAccess | null>}
      */
     resolve(key) {
-      return cache.get(key, () => load(key));
+      return cache.get(key, () => load(key, null));
+    },
+
+    /**
+     * Accès d'un compte lu en base, sans cache, dans la transaction en cours : ce qui fait
+     * autorité pour une décision qui change des permissions (règle d'escalade).
+     *
+     * @param {AccessKey} key
+     * @param {import('mongoose').ClientSession} session
+     * @returns {Promise<EventAccess | null>}
+     */
+    resolveFresh(key, session) {
+      return load(key, session);
     },
 
     /**

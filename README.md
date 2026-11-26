@@ -117,7 +117,10 @@ aussi `Idempotency-Key`. Les décisions (jetons, sessions, limites, verrouillage
 [docs/decisions/0004-auth.md](./docs/decisions/0004-auth.md).
 
 Autorisations (`/api/v1/events/:eventId`) : `permissions/me` (rôle et permissions de l'appelant
-sur l'événement, pour l'affichage). Chaque route d'un événement est gardée par
+sur l'événement, pour l'affichage), `collaborators` (liste, changement de rôle, révocation),
+`invitations` (liste, création avec e-mail, révocation, `accept`) et `ownership-transfer`
+(propriétaire seulement, 2FA et authentification récente). Créer et accepter une invitation,
+et transférer la propriété, exigent `Idempotency-Key`. Chaque route d'un événement est gardée par
 `requirePermission('module:action')`, une permission du catalogue de
 `packages/shared/src/permissions` ; seul un collaborateur de l'événement y accède, et un compte
 étranger reçoit 404, jamais 403. Toute requête MongoDB sur une collection cloisonnée doit filtrer

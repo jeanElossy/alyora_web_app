@@ -237,14 +237,14 @@ export function buildProbeApp({ permissionCache = createMemoryPermissionCache() 
   /** @type {import('../../src/modules/access/access-module.js').AccessModule | undefined} */
   let accessModule;
   const built = buildPipelineApp((app, logger) => {
-    const auth = createAuthModule({
+    const deps = {
       config: createTestConfig(),
       logger,
       mailer: createRecordingMailer(),
       createRateLimitStore: () => new MemoryStore(),
-      passwordHasher: createFastPasswordHasher(),
-    });
-    accessModule = createAccessModule({ logger, permissionCache, authGuards: auth.guards });
+    };
+    const auth = createAuthModule({ ...deps, passwordHasher: createFastPasswordHasher() });
+    accessModule = createAccessModule({ ...deps, permissionCache, auth });
     const router = express.Router();
     mountRoutes(router, [
       ...auth.routes,

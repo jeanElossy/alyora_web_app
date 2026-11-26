@@ -1,8 +1,9 @@
 import { createAccessTokens } from '../../lib/auth/access-token.js';
 import { createPasswordHasher } from '../../lib/auth/password-hasher.js';
-import { createAuthGuards } from '../../lib/auth/require-auth.js';
+import { createAuthGuards, getAuth } from '../../lib/auth/require-auth.js';
 import { createKeyedHasher } from '../../lib/crypto/keyed-hash.js';
 import { createSecretBox } from '../../lib/crypto/secret-box.js';
+import { AppError } from '../../lib/errors/app-error.js';
 import { createCsrfProtection } from '../../lib/http/csrf.js';
 import { createIdempotency } from '../../lib/idempotency/idempotent.js';
 import { createAuthEmails } from './auth-emails.js';
@@ -27,8 +28,9 @@ export const systemClock = Object.freeze({ now: () => new Date() });
  */
 
 /**
- * Assemble le module d'authentification : services, gardes, routes. Les gardes (requireAuth)
- * sont exposées pour les autres modules.
+ * Assemble le module d'authentification : services, gardes, routes. Les gardes (requireAuth,
+ * requireRecentAuth, requireTwoFactorEnabled) et la protection CSRF sont exposées pour les
+ * autres modules.
  *
  * @param {AuthModuleDependencies} deps
  */
@@ -77,7 +79,31 @@ export function createAuthModule({
       limits,
     }),
   ]);
-  return { routes, guards, services, accessTokens };
+  return {
+    routes,
+    guards: {
+      ...guards,
+      /**
+       * Exige la double authentification active sur le compte (TWO_FACTOR_REQUIRED sinon). Avec
+       * requireRecentAuth, elle garantit un second facteur récent : la réauthentification
+       * demande alors le code. À placer après requireAuth.
+       *
+       * @returns {import('express').RequestHandler}
+       */
+      requireTwoFactorEnabled() {
+        return async (req, _res, next) => {
+          if (!(await services.twoFactor.isEnabled(getAuth(req).userId))) {
+            throw new AppError('TWO_FACTOR_REQUIRED');
+          }
+          next();
+        };
+      },
+    },
+    csrf,
+    services,
+    accessTokens,
+    keyedHasher,
+  };
 }
 
 /** @typedef {ReturnType<typeof createAuthModule>} AuthModule */

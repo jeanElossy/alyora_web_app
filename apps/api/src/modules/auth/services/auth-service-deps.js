@@ -15,23 +15,8 @@
 
 /** @typedef {import('../../../lib/context/service-context.js').ServiceContext} ServiceContext */
 
-/**
- * Met un e-mail en file d'attente sans jamais faire échouer l'opération qui l'envoie : elle
- * est déjà validée en base, et la réponse ne doit pas varier selon que l'e-mail part ou non
- * (elle révélerait l'existence d'un compte). Un échec est journalisé, sans destinataire.
- *
- * @param {Pick<AuthServiceDeps, 'mailer' | 'logger'>} deps
- * @param {import('../../../lib/mail/mail-queue.js').MailMessage} message
- * @param {string} event Nature de l'e-mail, pour le log.
- * @returns {Promise<void>}
- */
-export async function sendSafely({ mailer, logger }, message, event) {
-  try {
-    await mailer.send(message);
-  } catch (error) {
-    logger.error({ err: error, event }, 'Unable to queue an email');
-  }
-}
+// La mise en file sans échec est commune à tous les modules.
+export { sendSafely } from '../../../lib/mail/compose-email.js';
 
 /**
  * Champs d'un compte lus pour la vue « mon compte ».
