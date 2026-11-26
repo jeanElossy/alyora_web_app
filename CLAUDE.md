@@ -56,7 +56,9 @@ route -> validateur Zod -> auth -> permission -> controller -> service -> model
 ## Règles de sécurité non négociables
 
 - Toute permission est vérifiée côté serveur. Le front n'est jamais une frontière.
-- Toute requête Mongo porte eventId ou organizationId. Sans exception.
+- Toute requête Mongo porte eventId ou organizationId. Seule exception : les collections de
+  plateforme, qui n'appartiennent à aucun événement ni organisation (comptes, sessions, jetons,
+  clés d'idempotence), filtrées par leur identifiant ou par userId (ADR 0004).
 - Access token court en mémoire, refresh token en cookie HttpOnly Secure SameSite=Lax,
   avec rotation et détection de réutilisation.
 - Jetons d'invitation : 128 bits d'aléa, stockés hachés, révocables.
