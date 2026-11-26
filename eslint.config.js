@@ -1,4 +1,5 @@
 import {
+  apiControllers,
   base,
   e2e,
   node,
@@ -6,6 +7,7 @@ import {
   react,
   reactApiClient,
   reactTests,
+  roleComparisons,
 } from '@alyora/config/eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
@@ -17,6 +19,12 @@ export default defineConfig([
     ignores: ['apps/web/src/**', 'apps/web/e2e/**', 'apps/web/test/**'],
     extends: [node],
   },
+  {
+    files: ['apps/api/src/**/*.js', 'apps/worker/src/**/*.js', 'packages/shared/src/**/*.js'],
+    ignores: ['**/*.test.js', 'packages/shared/src/permissions/roles.js'],
+    extends: [roleComparisons],
+  },
+  { files: ['apps/api/src/**/*.controller.js'], extends: [apiControllers] },
   { files: ['apps/web/src/**/*.{js,jsx}'], extends: [react] },
   { files: ['apps/web/src/lib/api/**/*.js'], extends: [reactApiClient] },
   { files: ['apps/web/src/**/*.test.{js,jsx}'], extends: [reactTests] },
