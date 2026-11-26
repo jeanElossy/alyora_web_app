@@ -1,4 +1,5 @@
 import { describe, it } from 'vitest';
+import { expectPermissionEscalationRefused } from './escalation-assertions.js';
 import {
   expectCheckinAgentDeniedFinancial,
   expectHiddenFromOtherTenants,
@@ -41,4 +42,15 @@ export function describeTenantResource(spec) {
 export function describeTenantScopedModel(Model) {
   it(`${Model.modelName}: refuses every query without a tenant filter`, () =>
     expectUnscopedQueriesRefused(Model));
+}
+
+/**
+ * Un Editor ne peut pas accorder une permission qu'il n'a pas : à appeler pour chaque route
+ * qui accorde un rôle ou des permissions.
+ *
+ * @param {import('./escalation-assertions.js').GrantSpec} spec
+ */
+export function describePermissionEscalation(spec) {
+  it(`${spec.name}: an editor cannot grant a permission they do not hold (403)`, () =>
+    expectPermissionEscalationRefused(spec));
 }

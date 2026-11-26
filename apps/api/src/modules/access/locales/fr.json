@@ -1,0 +1,16 @@
+{
+  "emails": {
+    "greeting": "Bonjour {{firstName}},",
+    "greetingAnonymous": "Bonjour,",
+    "signature": "L’équipe ALYORA",
+    "invitation": {
+      "subject": "Invitation à rejoindre l’équipe d’un mariage sur ALYORA",
+      "invited": "{{inviterName}} vous invite à rejoindre l’équipe qui organise un mariage sur ALYORA.",
+      "account": "Pour accepter, connectez-vous avec cette adresse e-mail, ou créez un compte avec elle.",
+      "validity_one": "Cette invitation est valable {{count}} jour et ne sert qu’une fois.",
+      "validity_other": "Cette invitation est valable {{count}} jours et ne sert qu’une fois.",
+      "notYou": "Si vous ne connaissez pas cette personne, ignorez ce message.",
+      "action": "Voir l’invitation"
+    }
+  }
+}

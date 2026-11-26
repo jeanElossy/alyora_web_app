@@ -11,6 +11,8 @@ import { apiAs, seedEvent, unknownId } from './access.js';
  * @property {'get' | 'post' | 'patch' | 'delete'} method
  * @property {(ids: { eventId: string, resourceId: string }) => string} path
  * @property {object} [body]
+ * @property {() => Record<string, string>} [headers] En-têtes propres à chaque appel
+ *   (Idempotency-Key).
  */
 
 /**
@@ -22,7 +24,8 @@ import { apiAs, seedEvent, unknownId } from './access.js';
  * @property {() => import('express').Express} app L'application (lue au moment du test).
  * @property {(event: SeededEvent) => Promise<string>} create Crée une ressource dans
  *   l'événement, renvoie son identifiant.
- * @property {EventRoute} read Lecture d'une ressource, réussie pour son propriétaire.
+ * @property {EventRoute} read Lecture d'une ressource, réussie pour son propriétaire ; à défaut,
+ *   une opération sur une seule ressource (modification, révocation).
  * @property {{ route: EventRoute, ids: (body: any) => string[] }} [list] Liste de l'événement,
  *   et comment y lire les identifiants des ressources.
  * @property {EventRoute[]} [writes] Écritures : toutes refusées à un Reader.
@@ -35,7 +38,10 @@ import { apiAs, seedEvent, unknownId } from './access.js';
  * @param {{ eventId: string, resourceId: string }} ids
  */
 function call(client, route, ids) {
-  return client.send(route.method, route.path(ids), { body: route.body });
+  return client.send(route.method, route.path(ids), {
+    body: route.body,
+    headers: route.headers?.(),
+  });
 }
 
 /**
@@ -91,13 +97,15 @@ export async function expectHiddenFromOtherTenants(spec) {
   }
 
   if (spec.list) {
+    // Une ressource neuve : l'opération de contrôle a pu supprimer la première.
+    const listedOfA = await spec.create(a);
     const listed = await call(memberOfA, spec.list.route, {
       eventId: a.eventId,
-      resourceId: resourceOfA,
+      resourceId: listedOfA,
     });
     expect(listed.status, `${spec.name}: control, the owner lists their event`).toBe(200);
     const ids = spec.list.ids(listed.body);
-    expect(ids, `${spec.name}: the list of A`).toContain(resourceOfA);
+    expect(ids, `${spec.name}: the list of A`).toContain(listedOfA);
     expect(ids, `${spec.name}: the list of A`).not.toContain(resourceOfB);
   }
 }

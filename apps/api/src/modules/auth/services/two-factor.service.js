@@ -29,6 +29,17 @@ export function createTwoFactorService(deps, { lock, secondFactor }) {
 
   return {
     /**
+     * Vrai si la double authentification est active sur un compte actif : condition des
+     * opérations les plus sensibles (transfert de propriété).
+     *
+     * @param {string} userId
+     * @returns {Promise<boolean>}
+     */
+    async isEnabled(userId) {
+      return Boolean(await User.exists({ _id: userId, ...ACTIVE_ACCOUNT, twoFactorEnabled: true }));
+    },
+
+    /**
      * Prépare un nouveau secret, chiffré, en attente d'activation, et le QR code à scanner
      * (généré par le serveur, en SVG). Un réglage précédent non activé est remplacé.
      *

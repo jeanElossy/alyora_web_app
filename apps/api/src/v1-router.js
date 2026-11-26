@@ -29,11 +29,7 @@ export const API_V1_PREFIX = '/api/v1';
  */
 export function buildV1Routes(deps) {
   const auth = createAuthModule(deps);
-  const access = createAccessModule({
-    logger: deps.logger,
-    permissionCache: deps.permissionCache,
-    authGuards: auth.guards,
-  });
+  const access = createAccessModule({ ...deps, auth });
   return Object.freeze([...SYSTEM_ROUTES, ...auth.routes, ...access.routes]);
 }
 
