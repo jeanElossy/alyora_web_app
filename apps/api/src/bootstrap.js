@@ -7,6 +7,8 @@ import { createLogger } from './lib/logger/create-logger.js';
 import { createMailQueue, createQueueMailer } from './lib/mail/mail-queue.js';
 import { closeGracefully, installProcessHandlers } from './lib/process/lifecycle.js';
 import { closeRedis, connectRedis, createRedisClient, pingRedis } from './lib/redis/redis.js';
+import { configureTenancyGuard } from './lib/tenancy/tenancy-guard.js';
+import { createRedisPermissionCache } from './modules/access/services/permission-cache.js';
 
 export const SERVICE_NAME = 'api';
 
@@ -56,6 +58,9 @@ export async function startServer({
   if (defaultsApplied.length > 0) {
     logger.warn({ variables: defaultsApplied }, 'Non-production defaults applied');
   }
+  // Les requêtes non cloisonnées sont refusées dès la définition des modèles ; l'alerte
+  // critique passe par ce logger.
+  configureTenancyGuard({ logger });
 
   /** @type {import('./lib/process/lifecycle.js').Resource[]} */
   const resources = [];
@@ -89,6 +94,7 @@ export async function startServer({
         queue: mailQueue,
         secretBox: createSecretBox(config.auth.dataEncryptionKey),
       }),
+      permissionCache: createRedisPermissionCache({ redis, logger }),
     });
     server = await listen(app, config.port);
     logger.info({ port: config.port }, 'API listening');

@@ -20,6 +20,7 @@ import { API_V1_PREFIX, createV1Router } from './v1-router.js';
  * @property {(name: string) => import('express-rate-limit').Store} createRateLimitStore
  *   Stockage d'une limite nommée (connexion, inscription...).
  * @property {import('./lib/mail/mail-queue.js').Mailer} mailer
+ * @property {import('./modules/access/services/permission-cache.js').PermissionCache} permissionCache
  * @property {{ now: () => Date }} [clock]
  * @property {import('./lib/auth/password-hasher.js').PasswordHasher} [passwordHasher]
  */
