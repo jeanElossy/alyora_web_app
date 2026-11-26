@@ -18,6 +18,22 @@ export const ERROR_CATALOG = Object.freeze({
     message: 'Recent authentication required',
   }),
   FORBIDDEN: Object.freeze({ httpStatus: 403, message: 'Access denied' }),
+  // Règle d'escalade : un collaborateur n'accorde jamais une permission qu'il ne détient pas,
+  // et ne touche pas à un collaborateur qui en détient davantage.
+  PERMISSION_ESCALATION: Object.freeze({
+    httpStatus: 403,
+    message: 'Permissions beyond your own cannot be granted or changed',
+  }),
+  // L'opération (transfert de propriété) exige la double authentification activée.
+  TWO_FACTOR_REQUIRED: Object.freeze({
+    httpStatus: 403,
+    message: 'Two-factor authentication must be enabled for this operation',
+  }),
+  // L'invitation a été envoyée à une autre adresse que celle du compte connecté.
+  INVITATION_EMAIL_MISMATCH: Object.freeze({
+    httpStatus: 403,
+    message: 'This invitation was sent to another e-mail address',
+  }),
   EMAIL_NOT_VERIFIED: Object.freeze({ httpStatus: 403, message: 'Email address not verified' }),
   CSRF_INVALID: Object.freeze({ httpStatus: 403, message: 'Missing or invalid CSRF token' }),
   // Jeton reçu par e-mail inconnu, expiré, déjà utilisé ou révoqué : un seul code, pour ne
@@ -27,6 +43,11 @@ export const ERROR_CATALOG = Object.freeze({
   TWO_FACTOR_CONFLICT: Object.freeze({
     httpStatus: 409,
     message: 'Two-factor authentication is not in the expected state',
+  }),
+  // Déjà collaborateur de l'événement, ou une invitation est déjà en attente pour l'adresse.
+  COLLABORATOR_CONFLICT: Object.freeze({
+    httpStatus: 409,
+    message: 'Already a collaborator, or an invitation is already pending',
   }),
   IDEMPOTENCY_CONFLICT: Object.freeze({
     httpStatus: 409,

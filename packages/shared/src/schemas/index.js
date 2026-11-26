@@ -36,12 +36,28 @@ export {
   updateProfileRequestSchema,
   verifyEmailRequestSchema,
 } from './auth.schema.js';
+export {
+  acceptInvitationRequestSchema,
+  collaboratorListResponseSchema,
+  collaboratorParamsSchema,
+  collaboratorSchema,
+  createInvitationRequestSchema,
+  invitationListResponseSchema,
+  invitationParamsSchema,
+  invitationSchema,
+  invitationTokenSchema,
+  ownershipTransferRequestSchema,
+  ownershipTransferResponseSchema,
+  roleAssignmentSchema,
+  updateCollaboratorRequestSchema,
+} from './collaboration.schema.js';
 export { designSystemDemoFormSchema } from './demo.schema.js';
 export {
   errorDetailsSchema,
   errorIssueSchema,
   errorResponseSchema,
 } from './error-response.schema.js';
+export { cursorPageQuerySchema, cursorPageSchema } from './pagination.schema.js';
 export { pingResponseSchema } from './ping.schema.js';
 export { refreshSessionResponseSchema } from './session.schema.js';
 export {
@@ -61,6 +77,11 @@ export {
 // Types réexportés (un typedef JSDoc n'est pas transmis par `export ... from`).
 /** @typedef {import('./access.schema.js').EventRole} EventRole */
 /** @typedef {import('./access.schema.js').MyPermissionsResponse} MyPermissionsResponse */
+/** @typedef {import('./collaboration.schema.js').RoleAssignment} RoleAssignment */
+/** @typedef {import('./collaboration.schema.js').Collaborator} Collaborator */
+/** @typedef {import('./collaboration.schema.js').Invitation} Invitation */
+/** @typedef {import('./collaboration.schema.js').CreateInvitationRequest} CreateInvitationRequest */
+/** @typedef {import('./pagination.schema.js').CursorPageQuery} CursorPageQuery */
 /** @typedef {import('./error-response.schema.js').ErrorIssue} ErrorIssue */
 /** @typedef {import('./error-response.schema.js').ErrorDetails} ErrorDetails */
 /** @typedef {import('./error-response.schema.js').ErrorResponse} ErrorResponse */
