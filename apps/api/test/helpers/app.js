@@ -6,6 +6,7 @@ import { loadConfig } from '../../src/config/load-config.js';
 import { createLogger } from '../../src/lib/logger/create-logger.js';
 import { createLogCapture } from './log-capture.js';
 import { createRecordingMailer } from './mail.js';
+import { createMemoryPermissionCache } from './permission-cache.js';
 
 /** @typedef {import('../../src/config/load-config.js').AppConfig} AppConfig */
 
@@ -48,7 +49,8 @@ export function createTestLogger() {
 
 /**
  * La vraie application, avec des dépendances en mémoire : des vérifications de disponibilité
- * qui réussissent, des stockages de rate limit en mémoire, et un mailer qui enregistre.
+ * qui réussissent, des stockages de rate limit en mémoire, un mailer qui enregistre et un
+ * cache des permissions en mémoire.
  *
  * @param {object} [options]
  * @param {AppConfig} [options.config]
@@ -56,6 +58,7 @@ export function createTestLogger() {
  * @param {import('express-rate-limit').Store} [options.rateLimitStore]
  * @param {(name: string) => import('express-rate-limit').Store} [options.createRateLimitStore]
  * @param {ReturnType<typeof createRecordingMailer>} [options.mailer]
+ * @param {import('../../src/modules/access/services/permission-cache.js').PermissionCache} [options.permissionCache]
  * @param {{ now: () => Date }} [options.clock]
  * @param {import('../../src/lib/auth/password-hasher.js').PasswordHasher} [options.passwordHasher]
  */
@@ -65,6 +68,7 @@ export function buildTestApp({
   rateLimitStore = new MemoryStore(),
   createRateLimitStore = () => new MemoryStore(),
   mailer = createRecordingMailer(),
+  permissionCache = createMemoryPermissionCache(),
   clock,
   passwordHasher,
 } = {}) {
@@ -76,10 +80,11 @@ export function buildTestApp({
     rateLimitStore,
     createRateLimitStore,
     mailer,
+    permissionCache,
     ...(clock ? { clock } : {}),
     ...(passwordHasher ? { passwordHasher } : {}),
   });
-  return { app, logger, logs, mailer };
+  return { app, logger, logs, mailer, permissionCache };
 }
 
 /**

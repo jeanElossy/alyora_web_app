@@ -2,6 +2,7 @@ import express from 'express';
 import { globalRateLimiter } from './lib/http/rate-limit.js';
 import { buildOpenApiDocument } from './lib/openapi/build-document.js';
 import { mountRoutes } from './lib/openapi/registry.js';
+import { createAccessModule } from './modules/access/access-module.js';
 import { createAuthModule } from './modules/auth/auth-module.js';
 import { SYSTEM_ROUTES, createDocsRouter } from './modules/system/system.routes.js';
 
@@ -15,6 +16,8 @@ export const API_V1_PREFIX = '/api/v1';
  * @property {(name: string) => import('express-rate-limit').Store} createRateLimitStore
  *   Stockage d'une limite nommée (une par politique).
  * @property {import('./lib/mail/mail-queue.js').Mailer} mailer
+ * @property {import('./modules/access/services/permission-cache.js').PermissionCache} permissionCache
+ *   Cache des permissions résolues (Redis, partagé par les instances).
  * @property {{ now: () => Date }} [clock]
  * @property {import('./lib/auth/password-hasher.js').PasswordHasher} [passwordHasher]
  */
@@ -26,7 +29,12 @@ export const API_V1_PREFIX = '/api/v1';
  */
 export function buildV1Routes(deps) {
   const auth = createAuthModule(deps);
-  return Object.freeze([...SYSTEM_ROUTES, ...auth.routes]);
+  const access = createAccessModule({
+    logger: deps.logger,
+    permissionCache: deps.permissionCache,
+    authGuards: auth.guards,
+  });
+  return Object.freeze([...SYSTEM_ROUTES, ...auth.routes, ...access.routes]);
 }
 
 /** @param {V1Dependencies} deps */

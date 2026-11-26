@@ -35,6 +35,49 @@ export const node = defineConfig({
   },
 });
 
+const ROLE_COMPARISON_MESSAGE =
+  'Comparaison à une clé de rôle interdite : passer par une permission, ou par les fonctions de packages/shared/src/permissions/roles.js (isOwnerRole...).';
+/** Clés des rôles prédéfinis (packages/shared/src/permissions/roles.js). */
+const ROLE_KEY = '/^(owner|admin|editor|reader|checkin_agent)$/';
+
+/**
+ * Toute décision qui dépend d'un rôle passe par roles.js : une comparaison à une clé de rôle
+ * écrite en dur, dispersée dans le code, est refusée (===, !==, ==, !=, case).
+ */
+const ROLE_COMPARISON_SELECTORS = [
+  {
+    selector: `BinaryExpression[operator=/^[!=]==?$/] > Literal[value=${ROLE_KEY}]`,
+    message: ROLE_COMPARISON_MESSAGE,
+  },
+  { selector: `SwitchCase > Literal.test[value=${ROLE_KEY}]`, message: ROLE_COMPARISON_MESSAGE },
+];
+
+/** Sources Node (api, worker, shared) : pas de comparaison à une clé de rôle. */
+export const roleComparisons = defineConfig({
+  name: 'alyora/role-comparisons',
+  rules: {
+    'no-restricted-syntax': ['error', ...ROLE_COMPARISON_SELECTORS],
+  },
+});
+
+/** Controllers de l'API : ils passent par un service, jamais par un modèle. */
+export const apiControllers = defineConfig({
+  name: 'alyora/api-controllers',
+  rules: {
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            group: ['**/*.model.js', '**/models/*', 'mongoose'],
+            message: 'Un controller passe par un service : jamais d’accès direct à un modèle.',
+          },
+        ],
+      },
+    ],
+  },
+});
+
 const NO_FETCH_MESSAGE = 'Passer par le client API (src/lib/api), jamais par fetch directement.';
 const NO_LITERAL_TEXT_MESSAGE = 'Texte en dur interdit : passer par i18next (t()).';
 /** Une lettre, accents compris : un texte d'interface, pas un séparateur ni un nombre. */
@@ -62,6 +105,7 @@ export const react = defineConfig({
     ],
     'no-restricted-syntax': [
       'error',
+      ...ROLE_COMPARISON_SELECTORS,
       { selector: `JSXText[value=${LETTER}]`, message: NO_LITERAL_TEXT_MESSAGE },
       {
         selector: `:matches(JSXElement, JSXFragment) > JSXExpressionContainer > Literal[value=${LETTER}]`,
