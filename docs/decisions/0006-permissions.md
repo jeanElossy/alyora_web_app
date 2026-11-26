@@ -148,8 +148,70 @@ C'est le module le plus critique du projet : une erreur ici expose les données 
   variantes volontairement fautives (accès non vérifié, 403 qui confirme l'existence, écriture
   sous une permission de lecture, argent sous `event:read`) : chacune fait échouer le test
   correspondant.
-- « Un Editor ne peut pas accorder une permission qu'il n'a pas » arrive avec les routes de
-  collaboration (M0.5b).
+- `describePermissionEscalation(spec)` (M0.5b), pour chaque route qui accorde un rôle : un
+  Editor ne peut accorder ni une permission absente de son rôle, ni un rôle au-dessus du sien,
+  ni le rôle de propriétaire (403 `PERMISSION_ESCALATION`), alors qu'il peut accorder un
+  sous-ensemble du sien (contrôle). Appliqué aux invitations et au changement de rôle.
+- `read` peut être une opération sur une seule ressource (modification, révocation) quand la
+  ressource n'a pas de route de lecture : la liste est alors vérifiée sur une ressource neuve.
+
+### Collaboration (M0.5b)
+
+Routes sous `/api/v1/events/:eventId`, toutes `no-store`, CSRF sur toute route qui modifie
+l'état :
+
+| Route                                       | Garde                                                       |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| `GET /collaborators` (curseur, 100 au plus) | `collaborators:read`                                        |
+| `PATCH`, `DELETE /collaborators/:id`        | `collaborators:manage`, règle d'escalade                    |
+| `GET /invitations` (curseur, 100 au plus)   | `collaborators:read`                                        |
+| `POST /invitations`                         | `collaborators:invite`, escalade, `Idempotency-Key`, limite |
+| `DELETE /invitations/:id`                   | `collaborators:invite`, escalade                            |
+| `POST /invitations/accept`                  | compte vérifié, `Idempotency-Key`, limites                  |
+| `POST /ownership-transfer`                  | propriétaire, authentification récente, 2FA, idempotence    |
+
+- **Règle d'escalade**, avec les permissions de l'acteur **lues en base dans la transaction**,
+  jamais depuis le cache ni depuis le contexte de la requête :
+  - les permissions accordées (invitation, changement de rôle) sont un sous-ensemble, strict ou
+    égal, de celles de l'acteur, sinon 403 `PERMISSION_ESCALATION`, avec la liste des
+    permissions manquantes dans `details.issues` ;
+  - le rôle de propriétaire ne s'accorde jamais ainsi, même par le propriétaire ;
+  - modifier ou révoquer un collaborateur exige que **ses** permissions actuelles soient aussi
+    incluses dans celles de l'acteur : un administrateur ne touche donc pas au propriétaire ;
+  - le propriétaire n'est ni modifiable ni révocable, et personne ne modifie son propre accès
+    (403 `FORBIDDEN`) : le propriétaire change par un transfert ;
+  - révoquer une invitation suit la même inclusion.
+- **Invitations** : jeton de 128 bits d'aléa (22 caractères base64url), empreinte SHA-256 en
+  base, jamais renvoyé par l'API. Valables 7 jours. Le lien de l'e-mail
+  (`/invitation#evenement=…&jeton=…`) porte l'événement et le jeton dans le fragment, si bien
+  que l'invitation se cherche toujours par (événement, empreinte). Une adresse qui a déjà accès,
+  ou une invitation en attente, donne 409 `COLLABORATOR_CONFLICT` ; une invitation périmée ne
+  bloque plus l'adresse (statut `expired`). L'e-mail part après la validation ; s'il ne peut être
+  mis en file, l'échec est journalisé, l'invitation reste (révoquer puis réinviter). La page web
+  d'acceptation viendra avec les écrans de l'équipe.
+- **Acceptation** : réservée au compte dont l'adresse est l'adresse invitée (403
+  `INVITATION_EMAIL_MISMATCH`). L'escalade est revérifiée à ce moment : un inviteur révoqué ou
+  rétrogradé depuis ne fait entrer personne. Jeton inconnu, expiré, révoqué, déjà accepté, ou
+  inviteur sans les droits : 400 `INVALID_TOKEN`, sans dire lequel.
+- **Transfert de propriété** : seul le propriétaire, avec la 2FA active (403
+  `TWO_FACTOR_REQUIRED`, garde `requireTwoFactorEnabled`) et une authentification de moins de
+  10 minutes (`requireRecentAuth`), qui inclut alors le code. La cible est un collaborateur
+  actif ; l'ancien propriétaire devient administrateur. Réponse 200 avec un corps, pour que
+  l'idempotence rejoue un transfert déjà fait au lieu de le réexécuter (une réponse 204 sans
+  corps n'est pas enregistrée).
+- Chaque changement est journalisé dans sa transaction (`invitation.created`, `.revoked`,
+  `.accepted`, `collaborator.permissions_changed`, `collaborator.revoked`,
+  `ownership.transferred`), sans adresse e-mail, et le cache des permissions de la cible est
+  invalidé après la validation : une révocation prend effet à la requête suivante (testé).
+- L'idempotence est liée au compte, à l'événement et au corps : une même clé présentée par un
+  autre compte est un conflit, jamais le rejeu d'une réponse qui ne lui appartient pas.
+- Limites (Redis, bloquantes si Redis tombe) : 50 invitations par heure et par compte ;
+  acceptations, 20 par 15 minutes et par IP, 10 par 15 minutes et par compte.
+- La liste de l'équipe montre le nom des membres, jamais leur adresse.
+- **Concurrence** (tests de course) : une invitation présentée 5 fois en même temps donne un
+  seul collaborateur ; une adresse invitée 5 fois en même temps, une seule invitation et un seul
+  e-mail ; trois transferts simultanés, exactement un propriétaire ; un changement de rôle et une
+  révocation simultanés laissent un état cohérent, une entrée d'audit par opération réussie.
 
 ### Controllers
 
@@ -164,4 +226,12 @@ C'est le module le plus critique du projet : une erreur ici expose les données 
 - Toute nouvelle collection doit être classée (cloisonnée ou plateforme), sinon la suite de
   tests échoue.
 - Les modules suivants exposent leurs routes sous `/events/:eventId/...`, gardées par
-  `requirePermission`, et leurs tests appellent `describeTenantResource`.
+  `requirePermission`, et leurs tests appellent `describeTenantResource` (et
+  `describePermissionEscalation` pour une route qui accorde des permissions).
+- M0.5b ajoute quatre codes d'erreur (`PERMISSION_ESCALATION`, `TWO_FACTOR_REQUIRED`,
+  `INVITATION_EMAIL_MISMATCH`, `COLLABORATOR_CONFLICT`), traduits par le client web, et met en
+  commun la rédaction des e-mails (`lib/mail/compose-email.js`) entre l'authentification et
+  les autorisations.
+- Les rôles personnalisés n'ont pas encore de routes (module des organisations) : changer les
+  permissions d'un rôle personnalisé devra invalider le cache de tous ses porteurs (index
+  `organization_custom_role`).
