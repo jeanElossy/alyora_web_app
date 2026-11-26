@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.js';
 
 /** Une clé de traduction, telle que la langue des clés l'affiche, ou une couleur (#173D32). */
 const KEY_OR_COLOR = /^([A-Za-z0-9_.:-]+|#[0-9A-F]{6})$/;

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.js';
 
 const PROTECTED_SPACES = [
   { path: '/organisateur', chunk: 'organizer-space', login: /Connexion à l’espace organisateur/ },

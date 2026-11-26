@@ -140,6 +140,23 @@ Contrastes WCAG calculés (AA : 4,5:1 pour le texte courant, 3:1 pour un contour
   navigateur les connaît, rien sinon), léger zoom des photos au survol. Tout est neutralisé pour
   qui demande moins de mouvement.
 
+### En-têtes de sécurité (clôture de M0.4)
+
+- Servis par Vercel sur toutes les pages (`apps/web/vercel.json`) :
+  - **CSP** : tout vient du site lui-même (`'self'`). Aucun script en ligne ni `eval`.
+    Exceptions : les styles en ligne (`'unsafe-inline'`), que React et le blocage du défilement
+    des dialogues injectent ; les images `data:`, pour le QR code de la 2FA. Le site ne peut être
+    intégré dans aucune page (`frame-ancestors 'none'`, et `X-Frame-Options: DENY`).
+  - `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`.
+  - `Permissions-Policy` : caméra, micro, géolocalisation, paiement et USB coupés. **Le module
+    d'accueil (scan des invités) devra ouvrir la caméra au site** (`camera=(self)`).
+- Zod tourne sans compilation à la volée (`src/lib/zod-config.js`) : la CSP interdit `eval`.
+- `vite preview` sert les mêmes en-têtes (lus dans `vercel.json`) : les tests de bout en bout
+  tournent sous la vraie CSP, et chacun échoue à la moindre violation (`e2e/fixtures.js`).
+  Pas en développement : le rechargement à chaud de React injecte un script en ligne.
+- Un appel vers une autre origine (API sur un autre domaine, prestataire de paiement...) devra
+  être ajouté à `connect-src`, et le cas échéant à `script-src` ou `frame-src`.
+
 ### Budget
 
 - `pnpm build` lance `scripts/check-bundle-budget.js` : il lit le manifeste de Vite, affiche le
