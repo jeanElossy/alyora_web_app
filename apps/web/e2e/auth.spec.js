@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures.js';
 
 const TOKEN = 'T'.repeat(43);
 const CURRENT_USER = {

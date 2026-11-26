@@ -230,7 +230,9 @@ Pour l'instant, trois services, tous déployés depuis `main` :
     il accepte et renvoie les cookies de refresh et CSRF (`SameSite=Lax`). Sur deux domaines
     `vercel.app` et `onrender.com`, il les refuserait.
   - sert `index.html` à toute adresse qui n'est pas un fichier du build : liens directs et
-    liens des e-mails (`/verifier-email`…).
+    liens des e-mails (`/verifier-email`…) ;
+  - pose les en-têtes de sécurité (CSP stricte, refus d'être intégré dans une autre page) :
+    voir l'ADR 0003. Tout appel vers une autre origine doit y être autorisé.
 - **API sur Render** (https://alyora-api.onrender.com) :
 
   | Réglage            | Valeur                                         |

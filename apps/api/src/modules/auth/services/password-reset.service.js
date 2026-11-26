@@ -32,7 +32,7 @@ export function createPasswordResetService(deps) {
     async requestReset(_context, { email }) {
       const user = await User.findOne(
         { email, deletedAt: null, status: 'active' },
-        { email: 1, firstName: 1, timezone: 1 },
+        { email: 1, firstName: 1, timezone: 1, locale: 1 },
       ).lean();
       if (!user) {
         return;
@@ -74,7 +74,7 @@ export function createPasswordResetService(deps) {
       const account = pending
         ? await User.findOne(
             { _id: pending.userId, deletedAt: null, status: 'active' },
-            { email: 1, firstName: 1, lastName: 1, timezone: 1 },
+            { email: 1, firstName: 1, lastName: 1, timezone: 1, locale: 1 },
           ).lean()
         : null;
       if (!account) {

@@ -47,7 +47,9 @@ export function createReauthenticationService(deps, { lock, secondFactor }) {
       const user = await User.findOne({ _id: userId, deletedAt: null, status: 'active' })
         .select('+passwordHash +twoFactorSecret')
         .lean();
-      if (!user || lock.isLocked(user, now)) {
+      // Essai réservé avant la vérification (voir account-lock.js) : compte verrouillé ou
+      // essais épuisés, rien n'est vérifié.
+      if (!user || !(await lock.reserveAttempt(userId, now))) {
         throw new AppError('INVALID_CREDENTIALS');
       }
       if (!(await passwordHasher.verify(user.passwordHash, password))) {
@@ -58,6 +60,8 @@ export function createReauthenticationService(deps, { lock, secondFactor }) {
         await lock.recordFailure(userId, now);
         throw new AppError('INVALID_TWO_FACTOR_CODE');
       }
+      // Secrets justes : les échecs sont effacés, quelle que soit la suite.
+      await lock.reset(userId);
       const authSession = await AuthSession.findOneAndUpdate(
         { _id: sessionId, userId, revokedAt: null, expiresAt: { $gt: now } },
         { $set: { authenticatedAt: now, lastSeenAt: now } },
@@ -66,7 +70,6 @@ export function createReauthenticationService(deps, { lock, secondFactor }) {
       if (!authSession) {
         throw new AppError('UNAUTHENTICATED');
       }
-      await lock.reset(userId);
       logger.info({ event: 'auth.reauthenticated', userId: userId.toString() }, 'Reauthenticated');
       return signSessionAccessToken(accessTokens, user, authSession);
     },
@@ -84,7 +87,7 @@ export function createReauthenticationService(deps, { lock, secondFactor }) {
       const sessionId = requireSessionId(context);
       const user = await User.findOne(
         { _id: userId, deletedAt: null, status: 'active' },
-        { email: 1, firstName: 1, lastName: 1, timezone: 1 },
+        { email: 1, firstName: 1, lastName: 1, timezone: 1, locale: 1 },
       ).lean();
       if (!user) {
         throw new AppError('UNAUTHENTICATED');

@@ -4,9 +4,12 @@ import {
   EMAIL_VERIFICATION_TTL_SECONDS,
   PASSWORD_RESET_TTL_SECONDS,
 } from '@alyora/shared';
+import { createTranslator, supportedLocale } from '../../lib/i18n/translator.js';
+import fr from './locales/fr.json' with { type: 'json' };
 
-// E-mails de l'authentification, en français. Chaque e-mail a une version texte et une
-// version HTML sobre ; toute valeur venue d'un utilisateur (prénom) est échappée.
+// E-mails de l'authentification. Les textes viennent des traductions (locales/), dans la
+// langue du destinataire. Chaque e-mail a une version texte et une version HTML sobre ; tout
+// texte est échappé pour la version HTML, valeurs venues d'un utilisateur (prénom) comprises.
 
 /**
  * @param {string} value
@@ -26,46 +29,25 @@ function escapeHtml(value) {
  * @property {string} email
  * @property {string} firstName
  * @property {string} timezone
+ * @property {string | null} [locale] Langue du compte ; la langue par défaut sinon.
  */
 
 /**
- * @param {object} content
- * @param {Recipient} content.to
- * @param {string} content.subject
- * @param {string[]} content.paragraphs Texte brut, échappé pour la version HTML.
- * @param {{ label: string, url: string }} [content.action]
- * @returns {import('../../lib/mail/mail-queue.js').MailMessage}
+ * Un paragraphe : sa clé dans emails.<e-mail>, et les valeurs à y interpoler.
+ *
+ * @typedef {string | [string, Record<string, unknown>]} Paragraph
  */
-function compose({ to, subject, paragraphs, action }) {
-  const greeting = `Bonjour ${to.firstName},`;
-  const signature = 'L’équipe ALYORA';
-  const text = [
-    greeting,
-    ...paragraphs,
-    ...(action ? [`${action.label} : ${action.url}`] : []),
-    signature,
-  ].join('\n\n');
-  const html = [
-    `<p>${escapeHtml(greeting)}</p>`,
-    ...paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`),
-    ...(action
-      ? [`<p><a href="${escapeHtml(action.url)}">${escapeHtml(action.label)}</a></p>`]
-      : []),
-    `<p>${escapeHtml(signature)}</p>`,
-  ].join('\n');
-  return { to: to.email, subject, text, html };
-}
 
 /**
  * @param {Date} date
- * @param {string} timezone
- * @returns {string}
+ * @param {Recipient} to
+ * @returns {string} La date et l'heure, dans la langue et le fuseau du destinataire.
  */
-function formatDate(date, timezone) {
-  return new Intl.DateTimeFormat('fr-FR', {
+function formatDate(date, to) {
+  return new Intl.DateTimeFormat(supportedLocale(to.locale), {
     dateStyle: 'long',
     timeStyle: 'short',
-    timeZone: timezone,
+    timeZone: to.timezone,
   }).format(date);
 }
 
@@ -75,6 +57,8 @@ function formatDate(date, timezone) {
  * @param {{ webAppUrl: string }} options
  */
 export function createAuthEmails({ webAppUrl }) {
+  const { t } = createTranslator({ resources: { fr: { auth: fr } }, namespace: 'auth' });
+
   /**
    * Lien vers une page de l'application, le jeton dans le fragment : il n'atteint jamais un
    * serveur, ni les logs, ni l'en-tête Referer.
@@ -85,51 +69,57 @@ export function createAuthEmails({ webAppUrl }) {
   const link = (path, token) =>
     `${webAppUrl}${path}${token ? `#${EMAILED_TOKEN_PARAM}=${encodeURIComponent(token)}` : ''}`;
 
+  /**
+   * @param {Recipient} to
+   * @param {string} name Nom de l'e-mail dans les traductions (emails.<name>).
+   * @param {Paragraph[]} paragraphs
+   * @param {string} url Lien du bouton d'action.
+   * @returns {import('../../lib/mail/mail-queue.js').MailMessage}
+   */
+  function compose(to, name, paragraphs, url) {
+    const locale = to.locale;
+    const greeting = t(locale, 'emails.greeting', { firstName: to.firstName });
+    const signature = t(locale, 'emails.signature');
+    const body = paragraphs.map((paragraph) =>
+      typeof paragraph === 'string'
+        ? t(locale, `emails.${name}.${paragraph}`)
+        : t(locale, `emails.${name}.${paragraph[0]}`, paragraph[1]),
+    );
+    const action = { label: t(locale, `emails.${name}.action`), url };
+    const text = [greeting, ...body, `${action.label} : ${action.url}`, signature].join('\n\n');
+    const html = [
+      `<p>${escapeHtml(greeting)}</p>`,
+      ...body.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`),
+      `<p><a href="${escapeHtml(action.url)}">${escapeHtml(action.label)}</a></p>`,
+      `<p>${escapeHtml(signature)}</p>`,
+    ].join('\n');
+    return { to: to.email, subject: t(locale, `emails.${name}.subject`), text, html };
+  }
+
+  const secureAccount = link(AUTH_WEB_PATHS.forgotPassword);
+
   return {
     /** @param {Recipient} to @param {string} token */
     verifyEmail: (to, token) =>
-      compose({
+      compose(
         to,
-        subject: 'Confirmez votre adresse e-mail',
-        paragraphs: [
-          'Bienvenue sur ALYORA. Pour activer votre compte, confirmez votre adresse e-mail.',
-          `Ce lien est valable ${EMAIL_VERIFICATION_TTL_SECONDS / 3600} heures et ne sert qu’une fois.`,
-          'Si vous n’avez pas créé de compte, ignorez ce message.',
-        ],
-        action: { label: 'Confirmer mon adresse', url: link(AUTH_WEB_PATHS.verifyEmail, token) },
-      }),
+        'verifyEmail',
+        ['welcome', ['validity', { count: EMAIL_VERIFICATION_TTL_SECONDS / 3600 }], 'notYou'],
+        link(AUTH_WEB_PATHS.verifyEmail, token),
+      ),
 
     /** @param {Recipient} to */
     accountExists: (to) =>
-      compose({
-        to,
-        subject: 'Une inscription a été tentée avec votre adresse',
-        paragraphs: [
-          'Quelqu’un a essayé de créer un compte ALYORA avec votre adresse e-mail, qui a déjà un compte.',
-          'Si c’était vous, connectez-vous, ou choisissez un nouveau mot de passe si vous l’avez oublié.',
-          'Sinon, ignorez ce message : votre compte n’a pas été modifié.',
-        ],
-        action: {
-          label: 'Choisir un nouveau mot de passe',
-          url: link(AUTH_WEB_PATHS.forgotPassword),
-        },
-      }),
+      compose(to, 'accountExists', ['attempt', 'ifYou', 'otherwise'], secureAccount),
 
     /** @param {Recipient} to @param {string} token */
     resetPassword: (to, token) =>
-      compose({
+      compose(
         to,
-        subject: 'Choisissez un nouveau mot de passe',
-        paragraphs: [
-          'Vous avez demandé à changer le mot de passe de votre compte ALYORA.',
-          `Ce lien est valable ${PASSWORD_RESET_TTL_SECONDS / 60} minutes et ne sert qu’une fois.`,
-          'Si vous n’êtes pas à l’origine de cette demande, ignorez ce message : votre mot de passe reste inchangé.',
-        ],
-        action: {
-          label: 'Choisir un nouveau mot de passe',
-          url: link(AUTH_WEB_PATHS.resetPassword, token),
-        },
-      }),
+        'resetPassword',
+        ['request', ['validity', { count: PASSWORD_RESET_TTL_SECONDS / 60 }], 'notYou'],
+        link(AUTH_WEB_PATHS.resetPassword, token),
+      ),
 
     /**
      * @param {Recipient} to
@@ -137,78 +127,37 @@ export function createAuthEmails({ webAppUrl }) {
      * @param {{ otherDevicesOnly?: boolean }} [options] Changé depuis un appareil resté connecté.
      */
     passwordChanged: (to, changedAt, { otherDevicesOnly = false } = {}) =>
-      compose({
+      compose(
         to,
-        subject: 'Votre mot de passe a été modifié',
-        paragraphs: [
-          `Le mot de passe de votre compte ALYORA a été modifié le ${formatDate(changedAt, to.timezone)}.`,
-          otherDevicesOnly
-            ? 'Par sécurité, vos autres appareils ont été déconnectés.'
-            : 'Par sécurité, tous vos appareils ont été déconnectés.',
-          'Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe.',
+        'passwordChanged',
+        [
+          ['changed', { date: formatDate(changedAt, to) }],
+          otherDevicesOnly ? 'otherDevices' : 'allDevices',
+          'notYou',
         ],
-        action: {
-          label: 'Sécuriser mon compte',
-          url: link(AUTH_WEB_PATHS.forgotPassword),
-        },
-      }),
+        secureAccount,
+      ),
 
     /** @param {Recipient} to @param {Date} lockedUntil */
     accountLocked: (to, lockedUntil) =>
-      compose({
+      compose(
         to,
-        subject: 'Connexion à votre compte suspendue',
-        paragraphs: [
-          'Plusieurs tentatives de connexion à votre compte ALYORA ont échoué.',
-          `Par sécurité, la connexion est suspendue jusqu’au ${formatDate(lockedUntil, to.timezone)}.`,
-          'Si ce n’était pas vous, choisissez un nouveau mot de passe dès que possible.',
-        ],
-        action: {
-          label: 'Choisir un nouveau mot de passe',
-          url: link(AUTH_WEB_PATHS.forgotPassword),
-        },
-      }),
+        'accountLocked',
+        ['failures', ['until', { date: formatDate(lockedUntil, to) }], 'notYou'],
+        secureAccount,
+      ),
 
     /** @param {Recipient} to */
     twoFactorEnabled: (to) =>
-      compose({
-        to,
-        subject: 'Double authentification activée',
-        paragraphs: [
-          'La double authentification est maintenant active sur votre compte ALYORA : chaque connexion demandera aussi le code de votre application.',
-          'Gardez vos codes de secours en lieu sûr : chacun permet une connexion si vous perdez votre téléphone. Vos autres appareils ont été déconnectés.',
-          'Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe.',
-        ],
-        action: { label: 'Sécuriser mon compte', url: link(AUTH_WEB_PATHS.forgotPassword) },
-      }),
+      compose(to, 'twoFactorEnabled', ['active', 'backupCodes', 'notYou'], secureAccount),
 
     /** @param {Recipient} to */
     twoFactorDisabled: (to) =>
-      compose({
-        to,
-        subject: 'Double authentification désactivée',
-        paragraphs: [
-          'La double authentification a été désactivée sur votre compte ALYORA : la connexion ne demande plus que votre mot de passe.',
-          'Si vous n’êtes pas à l’origine de ce changement, choisissez tout de suite un nouveau mot de passe, puis réactivez-la.',
-        ],
-        action: { label: 'Sécuriser mon compte', url: link(AUTH_WEB_PATHS.forgotPassword) },
-      }),
+      compose(to, 'twoFactorDisabled', ['inactive', 'notYou'], secureAccount),
 
     /** @param {Recipient} to */
     suspiciousSession: (to) =>
-      compose({
-        to,
-        subject: 'Activité inhabituelle sur votre compte',
-        paragraphs: [
-          'Une connexion de votre compte ALYORA a été réutilisée d’une façon qui laisse penser à un vol.',
-          'Par sécurité, nous avons déconnecté l’appareil concerné. Reconnectez-vous pour continuer.',
-          'Si vous ne reconnaissez pas cette activité, choisissez un nouveau mot de passe.',
-        ],
-        action: {
-          label: 'Choisir un nouveau mot de passe',
-          url: link(AUTH_WEB_PATHS.forgotPassword),
-        },
-      }),
+      compose(to, 'suspiciousSession', ['reuse', 'signedOut', 'notYou'], secureAccount),
   };
 }
 

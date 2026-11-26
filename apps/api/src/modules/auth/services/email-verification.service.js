@@ -111,7 +111,7 @@ export function createEmailVerificationService(deps) {
     async resend(_context, { email }) {
       const user = await User.findOne(
         { email, deletedAt: null, status: 'active', emailVerifiedAt: null },
-        { email: 1, firstName: 1, timezone: 1 },
+        { email: 1, firstName: 1, timezone: 1, locale: 1 },
       ).lean();
       if (!user) {
         return;

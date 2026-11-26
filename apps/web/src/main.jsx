@@ -1,3 +1,4 @@
+import './lib/zod-config.js';
 import '@fontsource-variable/inter';
 import '@fontsource/cormorant-garamond/500.css';
 import '@fontsource/cormorant-garamond/600.css';
