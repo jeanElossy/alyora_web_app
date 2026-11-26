@@ -1,6 +1,7 @@
 {
   "emails": {
     "greeting": "Bonjour {{firstName}},",
+    "greetingAnonymous": "Bonjour,",
     "signature": "L’équipe ALYORA",
     "verifyEmail": {
       "subject": "Confirmez votre adresse e-mail",

@@ -5,24 +5,12 @@ import {
   PASSWORD_RESET_TTL_SECONDS,
 } from '@alyora/shared';
 import { createTranslator, supportedLocale } from '../../lib/i18n/translator.js';
+import { createEmailComposer } from '../../lib/mail/compose-email.js';
 import fr from './locales/fr.json' with { type: 'json' };
 
 // E-mails de l'authentification. Les textes viennent des traductions (locales/), dans la
-// langue du destinataire. Chaque e-mail a une version texte et une version HTML sobre ; tout
-// texte est échappé pour la version HTML, valeurs venues d'un utilisateur (prénom) comprises.
-
-/**
- * @param {string} value
- * @returns {string}
- */
-function escapeHtml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
+// langue du destinataire ; la mise en forme (texte et HTML échappé) est commune
+// (lib/mail/compose-email.js).
 
 /**
  * @typedef {object} Recipient
@@ -30,12 +18,6 @@ function escapeHtml(value) {
  * @property {string} firstName
  * @property {string} timezone
  * @property {string | null} [locale] Langue du compte ; la langue par défaut sinon.
- */
-
-/**
- * Un paragraphe : sa clé dans emails.<e-mail>, et les valeurs à y interpoler.
- *
- * @typedef {string | [string, Record<string, unknown>]} Paragraph
  */
 
 /**
@@ -69,32 +51,7 @@ export function createAuthEmails({ webAppUrl }) {
   const link = (path, token) =>
     `${webAppUrl}${path}${token ? `#${EMAILED_TOKEN_PARAM}=${encodeURIComponent(token)}` : ''}`;
 
-  /**
-   * @param {Recipient} to
-   * @param {string} name Nom de l'e-mail dans les traductions (emails.<name>).
-   * @param {Paragraph[]} paragraphs
-   * @param {string} url Lien du bouton d'action.
-   * @returns {import('../../lib/mail/mail-queue.js').MailMessage}
-   */
-  function compose(to, name, paragraphs, url) {
-    const locale = to.locale;
-    const greeting = t(locale, 'emails.greeting', { firstName: to.firstName });
-    const signature = t(locale, 'emails.signature');
-    const body = paragraphs.map((paragraph) =>
-      typeof paragraph === 'string'
-        ? t(locale, `emails.${name}.${paragraph}`)
-        : t(locale, `emails.${name}.${paragraph[0]}`, paragraph[1]),
-    );
-    const action = { label: t(locale, `emails.${name}.action`), url };
-    const text = [greeting, ...body, `${action.label} : ${action.url}`, signature].join('\n\n');
-    const html = [
-      `<p>${escapeHtml(greeting)}</p>`,
-      ...body.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`),
-      `<p><a href="${escapeHtml(action.url)}">${escapeHtml(action.label)}</a></p>`,
-      `<p>${escapeHtml(signature)}</p>`,
-    ].join('\n');
-    return { to: to.email, subject: t(locale, `emails.${name}.subject`), text, html };
-  }
+  const compose = createEmailComposer(t);
 
   const secureAccount = link(AUTH_WEB_PATHS.forgotPassword);
 
