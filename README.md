@@ -93,6 +93,10 @@ Pages du compte : `/inscription`, `/verifier-email`, `/mot-de-passe-oublie` et
 `pnpm --filter @alyora/web build` affiche le poids de chaque espace et échoue si le bundle
 initial de l'espace public dépasse 180 Ko compressés.
 
+Les permissions s'affichent avec `usePermissions(eventId)` et `<Can permission="...">`
+(`src/features/permissions/`) : un confort d'affichage seulement, l'API vérifiant chaque
+requête (voir l'ADR 0006).
+
 Le design system (`src/components/ui/`) se consulte sur `/design-system` : tous les composants
 dans tous leurs états, avec un passage en langue des clés de traduction. La page existe en
 développement (`pnpm --filter @alyora/web dev`) et n'est jamais dans le build de production,

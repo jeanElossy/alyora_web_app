@@ -18,4 +18,11 @@ export const queryKeys = Object.freeze({
     me: () => /** @type {const} */ (['auth', 'me']),
     sessions: () => /** @type {const} */ (['auth', 'sessions']),
   }),
+  // Permissions du compte connecté, par événement. Effacées avec tout le cache quand la
+  // session prend fin.
+  permissions: Object.freeze({
+    all: /** @type {const} */ (['permissions']),
+    /** @param {string} eventId */
+    mine: (eventId) => /** @type {const} */ (['permissions', 'mine', eventId]),
+  }),
 });

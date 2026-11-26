@@ -213,6 +213,21 @@ l'état :
   e-mail ; trois transferts simultanés, exactement un propriétaire ; un changement de rôle et une
   révocation simultanés laissent un état cohérent, une entrée d'audit par opération réussie.
 
+### Web : `usePermissions` et `<Can>` (M0.5c)
+
+- `features/permissions/` : `usePermissions(eventId)` lit `GET /events/:eventId/permissions/me`
+  par le client API (TanStack Query, clé `permissions.mine(eventId)`), et renvoie `can()`, le
+  rôle et les permissions. Les permissions sont gardées 60 secondes, comme le cache de l'API,
+  et effacées avec tout le cache quand la session prend fin.
+- `<Can eventId permission fallback>` affiche ses enfants seulement si la permission est
+  détenue ; rien pendant le chargement ; `fallback` si elle manque ou si la lecture échoue
+  (404 d'un événement étranger). Plusieurs `<Can>` du même événement font une seule requête.
+- Une permission absente du catalogue lève une erreur (`can()`), comme `requirePermission` côté
+  API : une faute de frappe ne masque rien en silence. Le typage JSDoc la refuse déjà.
+- **Rappelé en tête des deux fichiers : c'est un confort d'affichage, jamais une sécurité.**
+  Ce qui est masqué reste accessible à qui modifie la page ou appelle l'API ; seule l'API
+  protège les données, en vérifiant chaque permission sur chaque requête.
+
 ### Controllers
 
 - Une règle ESLint interdit à un `*.controller.js` d'importer un modèle ou Mongoose : un
