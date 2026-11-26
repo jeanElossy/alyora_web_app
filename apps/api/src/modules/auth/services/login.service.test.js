@@ -115,6 +115,26 @@ describe('login service', () => {
     expect(deps.mailer.sent).toHaveLength(1);
   });
 
+  it('checks at most 10 passwords under simultaneous attempts, then refuses without checking (race)', async () => {
+    const deps = await withAccount();
+    const tries = LOCK_THRESHOLD + 6;
+
+    const outcomes = await Promise.allSettled(
+      Array.from({ length: tries }, () => attempt(deps, 'mauvais mot de passe')),
+    );
+
+    // Même réponse pour tous : rien ne distingue un essai vérifié d'un essai refusé.
+    expect(outcomes.map((outcome) => outcome.status === 'rejected' && outcome.reason.code)).toEqual(
+      Array(tries).fill('INVALID_CREDENTIALS'),
+    );
+    const events = deps.logs.entries().map((entry) => entry.event);
+    expect(events.filter((event) => event === 'auth.login_failed')).toHaveLength(LOCK_THRESHOLD);
+    expect(events.filter((event) => event === 'auth.login_refused')).toHaveLength(
+      tries - LOCK_THRESHOLD,
+    );
+    expect((await User.findOne({ email: EMAIL }).lean())?.lockoutCount).toBe(1);
+  });
+
   it('refuses a disabled account, even with the right password', async () => {
     const deps = await withAccount();
     await User.updateOne({ email: EMAIL }, { $set: { status: 'disabled' } });

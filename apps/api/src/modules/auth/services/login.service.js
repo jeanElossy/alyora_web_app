@@ -47,17 +47,19 @@ export function createLoginService(deps, { sessions, lock, twoFactorLogin }) {
         await passwordHasher.verifyDummy(password);
         throw invalidCredentials();
       }
-      const passwordMatches = await passwordHasher.verify(user.passwordHash, password);
-      if (!passwordMatches) {
-        await lock.recordFailure(user._id, now);
-        logger.info({ event: 'auth.login_failed', userId: user._id.toString() }, 'Login failed');
-        throw invalidCredentials();
-      }
-      if (lock.isLocked(user, now) || user.status !== 'active') {
+      // Essai réservé avant la vérification : compte verrouillé, désactivé ou essais épuisés,
+      // le mot de passe n'est pas vérifié, mais la durée et la réponse restent les mêmes.
+      if (user.status !== 'active' || !(await lock.reserveAttempt(user._id, now))) {
+        await passwordHasher.verifyDummy(password);
         logger.info(
           { event: 'auth.login_refused', userId: user._id.toString() },
           'Login refused: account locked or disabled',
         );
+        throw invalidCredentials();
+      }
+      if (!(await passwordHasher.verify(user.passwordHash, password))) {
+        await lock.recordFailure(user._id, now);
+        logger.info({ event: 'auth.login_failed', userId: user._id.toString() }, 'Login failed');
         throw invalidCredentials();
       }
       /** @type {Record<string, unknown>} */
@@ -65,8 +67,10 @@ export function createLoginService(deps, { sessions, lock, twoFactorLogin }) {
         ? { passwordHash: await passwordHasher.hash(password) }
         : {};
       if (user.twoFactorEnabled) {
-        // Les compteurs d'échecs ne sont remis à zéro qu'après le second facteur : connaître
-        // le mot de passe ne permet pas d'essayer des codes sans fin.
+        // Mot de passe juste : l'essai est rendu, mais les échecs précédents restent comptés
+        // jusqu'au second facteur. Connaître le mot de passe ne permet pas d'essayer des codes
+        // sans fin.
+        await lock.releaseAttempt(user._id);
         if (Object.keys(rehash).length > 0) {
           await User.updateOne({ _id: user._id }, { $set: rehash });
         }

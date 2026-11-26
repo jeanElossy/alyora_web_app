@@ -75,11 +75,16 @@ export function createTwoFactorService(deps, { lock, secondFactor }) {
         throw new AppError('TWO_FACTOR_CONFLICT');
       }
       const sealed = user.twoFactorPendingSecret;
+      // Essai réservé avant la vérification du code (voir account-lock.js).
+      if (!(await lock.reserveAttempt(userId, now))) {
+        throw new AppError('INVALID_TWO_FACTOR_CODE');
+      }
       const step = matchTotp(secondFactor.open(userId, sealed), otp, now);
       if (step === null) {
         await lock.recordFailure(userId, now);
         throw new AppError('INVALID_TWO_FACTOR_CODE');
       }
+      await lock.releaseAttempt(userId);
       const { codes, records } = secondFactor.generateBackupCodes(userId);
       await withTransaction(async (session) => {
         const enabled = await User.updateOne(
@@ -128,10 +133,15 @@ export function createTwoFactorService(deps, { lock, secondFactor }) {
       if (!user) {
         throw new AppError('TWO_FACTOR_CONFLICT');
       }
+      // Essai réservé avant la vérification du code (voir account-lock.js).
+      if (!(await lock.reserveAttempt(userId, now))) {
+        throw new AppError('INVALID_TWO_FACTOR_CODE');
+      }
       if (!(await secondFactor.verify(user, input, now))) {
         await lock.recordFailure(userId, now);
         throw new AppError('INVALID_TWO_FACTOR_CODE');
       }
+      await lock.releaseAttempt(userId);
       await User.updateOne(
         { _id: userId, twoFactorEnabled: true },
         {

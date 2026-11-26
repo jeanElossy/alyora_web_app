@@ -42,24 +42,29 @@ export function createTwoFactorLoginService(deps, { sessions, lock, secondFactor
     },
 
     /**
-     * Termine la connexion avec un code TOTP ou un code de secours. Un code faux compte un
-     * échec pour l'étape (annulée au cinquième) et pour le compte (verrouillage). L'étape est
-     * consommée une seule fois, même sous requêtes simultanées.
+     * Termine la connexion avec un code TOTP ou un code de secours. Avant toute vérification,
+     * un essai est réservé sur l'étape (5 au plus) et sur le compte (verrouillage), par des
+     * mises à jour atomiques : des requêtes simultanées ne vérifient jamais plus de codes que
+     * ces limites. Un code faux reste compté ; l'étape est consommée une seule fois.
      *
      * @param {ServiceContext} context
      * @param {import('@alyora/shared/schemas').TwoFactorVerifyRequest} input
      * @returns {Promise<import('./session-tokens.js').IssuedTokens>}
-     * @throws {AppError} INVALID_TOKEN (étape inconnue, expirée, épuisée ou utilisée),
-     *   INVALID_TWO_FACTOR_CODE.
+     * @throws {AppError} INVALID_TOKEN (étape inconnue, expirée, épuisée ou utilisée, compte
+     *   verrouillé), INVALID_TWO_FACTOR_CODE.
      */
     async complete(context, { challengeToken, otp, backupCode }) {
       const now = clock.now();
-      const challenge = await TwoFactorChallenge.findOne({
-        tokenHash: hashToken(challengeToken),
-        consumedAt: null,
-        expiresAt: { $gt: now },
-        failedAttempts: { $lt: TWO_FACTOR_CHALLENGE_MAX_ATTEMPTS },
-      }).lean();
+      const challenge = await TwoFactorChallenge.findOneAndUpdate(
+        {
+          tokenHash: hashToken(challengeToken),
+          consumedAt: null,
+          expiresAt: { $gt: now },
+          attempts: { $lt: TWO_FACTOR_CHALLENGE_MAX_ATTEMPTS },
+        },
+        { $inc: { attempts: 1 } },
+        { projection: { userId: 1 } },
+      ).lean();
       const user = challenge
         ? await User.findOne({
             _id: challenge.userId,
@@ -70,14 +75,10 @@ export function createTwoFactorLoginService(deps, { sessions, lock, secondFactor
             .select('+twoFactorSecret')
             .lean()
         : null;
-      if (!challenge || !user || lock.isLocked(user, now)) {
+      if (!challenge || !user || !(await lock.reserveAttempt(user._id, now))) {
         throw new AppError('INVALID_TOKEN');
       }
       if (!(await secondFactor.verify(user, { otp, backupCode }, now))) {
-        await TwoFactorChallenge.updateOne(
-          { _id: challenge._id, consumedAt: null },
-          { $inc: { failedAttempts: 1 } },
-        );
         await lock.recordFailure(user._id, now);
         logger.info(
           { event: 'auth.second_factor_failed', userId: user._id.toString() },
@@ -90,6 +91,8 @@ export function createTwoFactorLoginService(deps, { sessions, lock, secondFactor
         { $set: { consumedAt: now } },
       ).lean();
       if (!consumed) {
+        // Code juste, mais l'étape vient d'être utilisée par une requête simultanée.
+        await lock.releaseAttempt(user._id);
         throw new AppError('INVALID_TOKEN');
       }
       await lock.reset(user._id);
